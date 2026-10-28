@@ -21,7 +21,10 @@ exclude_lines = [
     "def __repr__",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "\\.\\.\\.",
 ]
+
 
 [tool.ruff]
 line-length = 88
