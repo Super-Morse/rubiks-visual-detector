@@ -22,9 +22,11 @@
     <img src="https://sonarcloud.io/api/project_badges/measure?project=Super-Morse_rubiks-visual-detector&metric=code_smells" alt="Code Smells" />
   </a>
   <br />
-  <!-- Tech Stack Badges -->
+<!-- Tech Stack Badges -->
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11+" />
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/YOLO11-Ultralytics-00D4AA?style=flat&logo=yolo&logoColor=black" alt="YOLO11" />
+  <img src="https://img.shields.io/badge/ONNX-Runtime-005CED?style=flat&logo=onnx&logoColor=white" alt="ONNX Runtime" />
   <img src="https://img.shields.io/badge/OpenCV-Headless-5C3EE8?style=flat&logo=opencv&logoColor=white" alt="OpenCV" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/Code%20Style-Ruff-black?style=flat" alt="Ruff" />
