@@ -51,3 +51,9 @@ htmlcov/
 # Coverage
 coverage.xml
 .coverage
+
+# Datasets and raw files
+raw_data/
+dataset/
+*.zip
+runs/
