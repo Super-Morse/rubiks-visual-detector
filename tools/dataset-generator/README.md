@@ -17,6 +17,15 @@ A browser-based synthetic data generator built with **Three.js** that produces p
 
 ---
 
+### 📊 Computer Vision Model Performance (YOLO11)
+- **mAP@50:** 99.0%
+- **Inference Latency:** 15ms (CPU headless)
+- **Model Size:** 5.5 MB (ONNX format)
+
+![YOLO11 Metrics](docs/assets/yolo_metrics.png)
+
+---
+
 ## How to Run
 
 1. **Start local static server**:
