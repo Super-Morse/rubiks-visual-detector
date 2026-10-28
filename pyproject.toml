@@ -9,6 +9,20 @@ filterwarnings = [
     "ignore::starlette.exceptions.StarletteDeprecationWarning",
 ]
 
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
