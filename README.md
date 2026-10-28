@@ -40,7 +40,7 @@ This service acts as the computer vision ingestion pipeline for the [Super-Morse
 
 ---
 
-## 🏗️ Architecture & Engineering Standards
+## 🛠️ Architecture & Engineering Standards
 
 The codebase strictly adheres to **Clean Architecture** and **SOLID** principles:
 
@@ -56,6 +56,7 @@ rubiks-visual-detector/
 ```
 
 ### Key Engineering Highlights:
+
 * **SOLID Compliance**: Low coupling achieved via Dependency Inversion (`IColorClassifier`, `IGridDetector` abstractions).
 * **Test-Driven Development (TDD)**: Developed using the classical (Detroit) school of TDD without fragile mocks. Uses synthetic NumPy pixel buffers and deterministic image fixtures.
 * **Perceptual Color Science**: Classifies sticker colors using **CIELAB Delta-E (CIE2000)** and clustering instead of brittle RGB/HSV hardcoded ranges, making it robust against shadows and ambient light variations.
