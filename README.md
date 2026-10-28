@@ -40,6 +40,15 @@ This service acts as the computer vision ingestion pipeline for the [Super-Morse
 
 ---
 
+## 📊 Computer Vision Model Performance (YOLO11)
+- **mAP@50:** 99.0%
+- **Inference Latency:** 15ms (CPU headless)
+- **Model Size:** 5.5 MB (ONNX format)
+
+![YOLO11 Metrics](docs/assets/yolo_metrics.png)
+
+---
+
 ## 🛠️ Architecture & Engineering Standards
 
 The codebase strictly adheres to **Clean Architecture** and **SOLID** principles:
