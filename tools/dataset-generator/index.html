@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rubik's YOLO Dataset Studio</title>
-    <!-- Bulletproof standard scripts matching the main project architecture -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -81,6 +80,11 @@
             color: white;
             border-radius: 6px;
         }
+        input[readonly] {
+            color: #4CAF50;
+            background: rgba(10, 10, 12, 0.8);
+            cursor: default;
+        }
 
         button { 
             padding: 0.75rem; 
@@ -119,11 +123,10 @@
             border-left: 4px solid #4CAF50;
             border-radius: 4px;
             font-family: monospace;
-            min-height: 55px;
+            min-height: 45px;
             font-size: 0.85rem;
             word-wrap: break-word;
             margin-bottom: 1rem;
-            line-height: 1.4;
         }
         #status { 
             font-size: 0.85rem; 
@@ -132,13 +135,45 @@
             font-weight: bold;
         }
 
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .class-badge {
+            background: rgba(50, 50, 65, 0.6);
+            border: 1px solid #3a3a44;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .mobile-action-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .mobile-action-row button {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
         .progress-bar-container {
             width: 100%;
-            height: 8px;
+            height: 6px;
             background: rgba(18, 18, 20, 0.8);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             display: none;
         }
         .progress-bar {
@@ -148,47 +183,15 @@
             transition: width 0.1s linear;
         }
 
-        .class-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 0.5rem;
-        }
-        .class-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            padding: 6px 10px;
-            background: rgba(18, 18, 20, 0.6);
-            border: 1px solid #3a3a44;
-            border-radius: 4px;
-        }
-        .color-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            display: inline-block;
-        }
-
-        .info-card {
-            background: rgba(18, 18, 20, 0.6);
-            border: 1px solid #3a3a44;
-            border-radius: 6px;
-            padding: 0.8rem;
-            margin-bottom: 1rem;
-            font-size: 0.82rem;
-            color: #bbb;
-            line-height: 1.4;
-        }
-        .info-card strong { color: #fff; }
-
+        /* MOBILE FIXES & ALIGNMENT FROM SOLVER */
         @media (max-width: 900px) {
             body {
                 display: flex;
                 flex-direction: column;
                 height: 100vh;
+                height: -webkit-fill-available;
             }
+            
             #3d-container {
                 position: relative;
                 width: 100vw;
@@ -197,22 +200,76 @@
                 left: 0;
                 right: 0;
                 top: 0;
+                bottom: auto;
             }
+            
+            #left-panel h2, #right-panel h3, #right-panel p, .desktop-only {
+                display: none !important;
+            }
+
             .panel {
                 position: relative;
                 width: 100vw;
                 height: auto;
                 box-shadow: none;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
                 overflow: hidden;
                 background: #1c1c24;
                 flex: none;
             }
+
             #left-panel {
-                padding: 1rem;
+                padding: 0.4rem 1rem 0 1rem;
                 border: none;
             }
+            
+            #status {
+                margin-bottom: 0.2rem;
+                font-size: 0.8rem;
+            }
+
+            label {
+                margin-bottom: 0.2rem;
+            }
+
+            input, select {
+                padding: 0.4rem 0.6rem;
+                margin-bottom: 0.2rem;
+                font-size: 0.85rem;
+                width: 100%;
+            }
+            
+            #result-box {
+                margin-top: 0.2rem;
+                padding: 0.5rem;
+                min-height: 35px;
+                max-height: 55px;
+                overflow-y: auto;
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+                width: 100%;
+                border-left: 3px solid #4CAF50;
+            }
+
             #right-panel {
-                display: none;
+                padding: 0.1rem 1rem 0.6rem 1rem;
+                border: none;
+                margin-top: 0;
+            }
+
+            .mobile-action-row {
+                display: flex;
+                gap: 8px;
+                padding: 0.1rem 0 0.3rem 0;
+                background: #1c1c24;
+                width: 100%;
+            }
+            .mobile-action-row button {
+                flex: 1;
+                padding: 0.6rem 0;
+                font-size: 0.9rem;
+                margin-bottom: 0;
             }
         }
     </style>
@@ -224,51 +281,53 @@
     <!-- LEFT PANEL -->
     <div id="left-panel" class="panel">
         <h2>Dataset Studio</h2>
-        <div id="status">Engine Ready</div>
+        <div id="status">Studio Ready</div>
         
         <label for="samples-count">Number of samples:</label>
         <input type="number" id="samples-count" value="100" min="10" max="2000" step="10">
 
-        <label for="resolution-select">Image resolution:</label>
-        <select id="resolution-select">
-            <option value="640" selected>640 x 640 (YOLO Standard)</option>
-            <option value="416">416 x 416 (Fast Mobile)</option>
-            <option value="800">800 x 800 (High-Res)</option>
-        </select>
+        <div class="desktop-only">
+            <label for="resolution-select">Image resolution:</label>
+            <select id="resolution-select">
+                <option value="640" selected>640 x 640 (YOLO Standard)</option>
+                <option value="416">416 x 416 (Fast Mobile)</option>
+                <option value="800">800 x 800 (High-Res)</option>
+            </select>
+        </div>
 
         <div class="progress-bar-container" id="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
 
-        <div id="result-box">Ready. Drag cube in center to inspect 3D view.</div>
+        <div id="result-box">Ready. Configure moves & export.</div>
 
-        <button id="randomize-preview-btn" class="action-btn">Randomize Preview</button>
-        <button id="generate-btn">Generate & Export ZIP</button>
+        <div class="mobile-action-row">
+            <button id="randomize-preview-btn" class="action-btn">Randomize</button>
+            <button id="generate-btn">Generate ZIP</button>
+        </div>
     </div>
 
     <!-- RIGHT PANEL -->
     <div id="right-panel" class="panel">
         <h3>YOLO Classes</h3>
-        <p style="color:#aaa; font-size: 0.85rem; margin-top:0;">WCA standard 6-class configuration</p>
+        <p style="color:#aaa; font-size: 0.9rem; margin-top:0;">WCA standard 6-class configuration</p>
         
-        <div class="class-list">
-            <div class="class-badge"><span class="color-dot" style="background:#ffffff; border:1px solid #666;"></span> 0: White (U)</div>
-            <div class="class-badge"><span class="color-dot" style="background:#ffd500;"></span> 1: Yellow (D)</div>
-            <div class="class-badge"><span class="color-dot" style="background:#009b48;"></span> 2: Green (F)</div>
-            <div class="class-badge"><span class="color-dot" style="background:#0046ad;"></span> 3: Blue (B)</div>
-            <div class="class-badge"><span class="color-dot" style="background:#b71234;"></span> 4: Red (R)</div>
-            <div class="class-badge"><span class="color-dot" style="background:#ff5800;"></span> 5: Orange (L)</div>
+        <div class="class-grid">
+            <div class="class-badge"><span class="color-dot" style="background:#ffffff; border:1px solid #666;"></span> 0: White</div>
+            <div class="class-badge"><span class="color-dot" style="background:#ffd500;"></span> 1: Yellow</div>
+            <div class="class-badge"><span class="color-dot" style="background:#009b48;"></span> 2: Green</div>
+            <div class="class-badge"><span class="color-dot" style="background:#0046ad;"></span> 3: Blue</div>
+            <div class="class-badge"><span class="color-dot" style="background:#b71234;"></span> 4: Red</div>
+            <div class="class-badge"><span class="color-dot" style="background:#ff5800;"></span> 5: Orange</div>
         </div>
 
-        <h3 style="margin-top: 1.5rem;">Sim-to-Real Strategy</h3>
-        <div class="info-card">
-            <strong>Split Ratio:</strong> 80% Train / 20% Val.<br>
-            <strong>Combined:</strong> Works together with the 1,372 photos in our dataset.
+        <div style="margin-top: 1.5rem; font-size: 0.85rem; color: #888; line-height: 1.4;">
+            <strong style="color:#4CAF50;">Hybrid Pipeline:</strong><br>
+            80% Train / 20% Val split automatically formatted for YOLO11 training.
         </div>
     </div>
 
     <script>
-        // Standard YOLO classes
         const COLOR_CLASSES = [
             { id: 0, name: 'white',  hex: 0xffffff },
             { id: 1, name: 'yellow', hex: 0xffd500 },
@@ -304,7 +363,10 @@
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.rotateSpeed = 0.8;
+        controls.target.set(0, 0, 0);
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
@@ -318,7 +380,7 @@
         fillLight.position.set(-10, -5, -10);
         scene.add(fillLight);
 
-        // Cube Construction
+        // Core Cube (Constant 1.0 Scale, identical to solver)
         const cubeGroup = new THREE.Group();
         scene.add(cubeGroup);
 
@@ -369,13 +431,11 @@
             }
         });
 
+        // Fixed 1.0 scale (no random scaling of the cube)
         function randomizeCubeAppearance() {
             cubeGroup.rotation.x = (Math.random() - 0.5) * (Math.PI * 0.22);
             cubeGroup.rotation.y = (Math.random() - 0.5) * (Math.PI * 0.22);
             cubeGroup.rotation.z = (Math.random() - 0.5) * (Math.PI * 0.15);
-
-            const scale = 0.85 + Math.random() * 0.35;
-            cubeGroup.scale.set(scale, scale, scale);
 
             ambientLight.intensity = 0.5 + Math.random() * 0.5;
             dirLight.intensity = 1.0 + Math.random() * 1.0;
@@ -387,7 +447,7 @@
             });
 
             cubeGroup.updateMatrixWorld(true);
-            // Randomize background color for domain randomization
+
             scene.background = new THREE.Color(
                 Math.random() * 0.7 + 0.15,
                 Math.random() * 0.7 + 0.15,
@@ -447,7 +507,8 @@
 
         generateBtn.addEventListener('click', async () => {
             const totalSamples = parseInt(document.getElementById('samples-count').value, 10);
-            const resSize = parseInt(document.getElementById('resolution-select').value, 10);
+            const resSelect = document.getElementById('resolution-select');
+            const resSize = resSelect ? parseInt(resSelect.value, 10) : 640;
 
             generateBtn.disabled = true;
             randomizeBtn.disabled = true;
@@ -514,7 +575,7 @@ names:
             }
 
             statusEl.innerText = 'Archiving ZIP...';
-            resultBox.innerText = 'Compressing dataset package... Please wait.';
+            resultBox.innerText = 'Compressing package... Please wait.';
 
             const content = await zip.generateAsync({ type: "blob" });
             const downloadUrl = URL.createObjectURL(content);
