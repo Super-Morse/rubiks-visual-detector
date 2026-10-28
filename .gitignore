@@ -39,6 +39,15 @@ ENV/
 htmlcov/
 .pytest_cache/
 
+# Windows metadata & Zone.Identifier
+*:Zone.Identifier
+[Zz]one.[Ii]dentifier
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
 # IDEs
 .idea/
 .vscode/
