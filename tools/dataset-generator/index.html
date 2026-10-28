@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rubik's YOLO Dataset Studio</title>
+    <!-- Bulletproof standard scripts matching the main project architecture -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -179,7 +183,6 @@
         }
         .info-card strong { color: #fff; }
 
-        /* MOBILE FIXES */
         @media (max-width: 900px) {
             body {
                 display: flex;
@@ -213,24 +216,12 @@
             }
         }
     </style>
-
-    <!-- Import Three.js, OrbitControls, and JSZip via ESM CDN -->
-    <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/",
-        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
-      }
-    }
-    </script>
 </head>
 <body>
     
-    <!-- 3D VIEWPORT -->
     <div id="3d-container"></div>
 
-    <!-- LEFT PANEL: CONTROLS & GENERATOR -->
+    <!-- LEFT PANEL -->
     <div id="left-panel" class="panel">
         <h2>Dataset Studio</h2>
         <div id="status">Engine Ready</div>
@@ -249,13 +240,13 @@
             <div class="progress-bar" id="progress-bar"></div>
         </div>
 
-        <div id="result-box">Ready. Configure parameters and start generation.</div>
+        <div id="result-box">Ready. Drag cube in center to inspect 3D view.</div>
 
         <button id="randomize-preview-btn" class="action-btn">Randomize Preview</button>
         <button id="generate-btn">Generate & Export ZIP</button>
     </div>
 
-    <!-- RIGHT PANEL: YOLO CONFIG & SPECS -->
+    <!-- RIGHT PANEL -->
     <div id="right-panel" class="panel">
         <h3>YOLO Classes</h3>
         <p style="color:#aaa; font-size: 0.85rem; margin-top:0;">WCA standard 6-class configuration</p>
@@ -272,18 +263,12 @@
         <h3 style="margin-top: 1.5rem;">Sim-to-Real Strategy</h3>
         <div class="info-card">
             <strong>Split Ratio:</strong> 80% Train / 20% Val.<br>
-            <strong>Real Photos:</strong> Once generated, append 40 real images to <code>images/train/</code> and 10 real images to <code>images/val/</code> for fine-tuning.
+            <strong>Combined:</strong> Works together with the 1,372 photos in our dataset.
         </div>
     </div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import JSZip from 'jszip';
-
-        // -------------------------------------------------------------
-        // YOLO Class Definitions (BOY Standard Colors)
-        // -------------------------------------------------------------
+    <script>
+        // Standard YOLO classes
         const COLOR_CLASSES = [
             { id: 0, name: 'white',  hex: 0xffffff },
             { id: 1, name: 'yellow', hex: 0xffd500 },
@@ -301,26 +286,27 @@
         const generateBtn = document.getElementById('generate-btn');
         const randomizeBtn = document.getElementById('randomize-preview-btn');
 
-        // -------------------------------------------------------------
-        // Three.js Scene, Camera, Renderer Setup
-        // -------------------------------------------------------------
+        // Three.js scene setup
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#121214');
 
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        const width = container.clientWidth || (window.innerWidth - 700);
+        const height = container.clientHeight || window.innerHeight;
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
         camera.position.set(5.5, 4.5, 6.5);
+        camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(width, height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
         container.appendChild(renderer.domElement);
 
-        const controls = new OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
 
-        // Lighting setup
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
 
@@ -332,13 +318,10 @@
         fillLight.position.set(-10, -5, -10);
         scene.add(fillLight);
 
-        // -------------------------------------------------------------
-        // Rubik's Cube Geometry Construction
-        // -------------------------------------------------------------
+        // Cube Construction
         const cubeGroup = new THREE.Group();
         scene.add(cubeGroup);
 
-        // Internal black core cube
         const coreGeo = new THREE.BoxGeometry(2.96, 2.96, 2.96);
         const coreMat = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.85 });
         const coreMesh = new THREE.Mesh(coreGeo, coreMat);
@@ -386,24 +369,17 @@
             }
         });
 
-        // -------------------------------------------------------------
-        // Domain Randomization Logic
-        // -------------------------------------------------------------
         function randomizeCubeAppearance() {
-            // Random orientation
             cubeGroup.rotation.x = (Math.random() - 0.5) * Math.PI * 2.0;
             cubeGroup.rotation.y = (Math.random() - 0.5) * Math.PI * 2.0;
             cubeGroup.rotation.z = (Math.random() - 0.5) * Math.PI * 0.5;
 
-            // Random scale (distance simulation)
             const scale = 0.85 + Math.random() * 0.35;
             cubeGroup.scale.set(scale, scale, scale);
 
-            // Light variations
             ambientLight.intensity = 0.5 + Math.random() * 0.5;
             dirLight.intensity = 1.0 + Math.random() * 1.0;
 
-            // Randomize sticker colors (scrambled state simulation)
             stickers.forEach(item => {
                 const randomClass = COLOR_CLASSES[Math.floor(Math.random() * COLOR_CLASSES.length)];
                 item.activeColorClass = randomClass;
@@ -413,10 +389,7 @@
             cubeGroup.updateMatrixWorld(true);
         }
 
-        // -------------------------------------------------------------
-        // YOLO 3D-to-2D Label Calculation with Backface Culling
-        // -------------------------------------------------------------
-        function calculateYoloLabels(resSize) {
+        function calculateYoloLabels() {
             const labels = [];
             const halfSize = 0.44;
 
@@ -424,7 +397,6 @@
                 const worldNormal = item.normal.clone().applyEuler(cubeGroup.rotation).normalize();
                 const cameraRay = camera.position.clone().sub(item.mesh.getWorldPosition(new THREE.Vector3())).normalize();
 
-                // Skip stickers angled away from the camera
                 if (worldNormal.dot(cameraRay) < 0.15) return;
 
                 const localCorners = [
@@ -467,9 +439,6 @@
             return labels;
         }
 
-        // -------------------------------------------------------------
-        // Batch Generation & ZIP Packaging (80/20 Train-Val Split)
-        // -------------------------------------------------------------
         generateBtn.addEventListener('click', async () => {
             const totalSamples = parseInt(document.getElementById('samples-count').value, 10);
             const resSize = parseInt(document.getElementById('resolution-select').value, 10);
@@ -487,7 +456,6 @@
             const valLblFolder   = zip.folder("labels/val");
 
             const yamlContent = `# Ultralytics YOLO dataset configuration
-# Generated synthetically via Rubik's Dataset Studio
 path: ../dataset
 train: images/train
 val: images/val
@@ -500,9 +468,8 @@ names:
   4: red
   5: orange
 `;
-            zip.file("dataset.yaml", yamlContent);
+            zip.file("data.yaml", yamlContent);
 
-            // Temporary off-screen canvas for square YOLO training resolution
             const offscreenCanvas = document.createElement('canvas');
             offscreenCanvas.width = resSize;
             offscreenCanvas.height = resSize;
@@ -521,10 +488,10 @@ names:
                 randomizeCubeAppearance();
                 offscreenRenderer.render(scene, offscreenCamera);
 
-                const labels = calculateYoloLabels(resSize);
+                const labels = calculateYoloLabels();
                 const baseName = `synth_${String(i).padStart(5, '0')}`;
 
-                const isValidation = (i % 5 === 0); // 80% train / 20% val
+                const isValidation = (i % 5 === 0);
                 const targetImgFolder = isValidation ? valImgFolder : trainImgFolder;
                 const targetLblFolder = isValidation ? valLblFolder : trainLblFolder;
 
@@ -535,7 +502,7 @@ names:
 
                 const progress = Math.round((i / totalSamples) * 100);
                 progressBar.style.width = `${progress}%`;
-                resultBox.innerText = `Generated: ${i} / ${totalSamples} (${progress}%)\nSplit: [${isValidation ? 'VAL' : 'TRAIN'}] | Labels: ${labels.length} boxes`;
+                resultBox.innerText = `Generated: ${i} / ${totalSamples} (${progress}%)\nSplit: [${isValidation ? 'VAL' : 'TRAIN'}]`;
 
                 await new Promise(r => setTimeout(r, 10));
             }
@@ -547,13 +514,13 @@ names:
             const downloadUrl = URL.createObjectURL(content);
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = `rubiks_yolo_${totalSamples}_dataset.zip`;
+            link.download = `rubiks_synth_${totalSamples}.zip`;
             link.click();
             URL.revokeObjectURL(downloadUrl);
 
             statusEl.innerText = 'Dataset Ready!';
             statusEl.style.color = '#4CAF50';
-            resultBox.innerText = `Successfully exported ${totalSamples} samples.\nReady for training & adding real photos.`;
+            resultBox.innerText = `Successfully exported ${totalSamples} synthetic samples.`;
 
             generateBtn.disabled = false;
             randomizeBtn.disabled = false;
@@ -563,14 +530,14 @@ names:
             randomizeCubeAppearance();
         });
 
-        // Responsive window resize handling
         window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
+            const w = container.clientWidth || (window.innerWidth - 700);
+            const h = container.clientHeight || window.innerHeight;
+            camera.aspect = w / h;
             camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setSize(w, h);
         });
 
-        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
