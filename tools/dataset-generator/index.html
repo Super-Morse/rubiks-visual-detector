@@ -370,9 +370,9 @@
         });
 
         function randomizeCubeAppearance() {
-            cubeGroup.rotation.x = (Math.random() - 0.5) * Math.PI * 2.0;
-            cubeGroup.rotation.y = (Math.random() - 0.5) * Math.PI * 2.0;
-            cubeGroup.rotation.z = (Math.random() - 0.5) * Math.PI * 0.5;
+            cubeGroup.rotation.x = (Math.random() - 0.5) * (Math.PI * 0.22);
+            cubeGroup.rotation.y = (Math.random() - 0.5) * (Math.PI * 0.22);
+            cubeGroup.rotation.z = (Math.random() - 0.5) * (Math.PI * 0.15);
 
             const scale = 0.85 + Math.random() * 0.35;
             cubeGroup.scale.set(scale, scale, scale);
