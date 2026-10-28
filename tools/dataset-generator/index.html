@@ -387,6 +387,12 @@
             });
 
             cubeGroup.updateMatrixWorld(true);
+            // Randomize background color for domain randomization
+            scene.background = new THREE.Color(
+                Math.random() * 0.7 + 0.15,
+                Math.random() * 0.7 + 0.15,
+                Math.random() * 0.7 + 0.15
+            );
         }
 
         function calculateYoloLabels() {
