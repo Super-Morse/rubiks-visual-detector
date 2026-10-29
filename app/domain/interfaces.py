@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.models import CubeState
+from app.domain.models import CubeState, FaceScanResult
 
 
 class ICubeValidator(ABC):
@@ -12,5 +12,19 @@ class ICubeValidator(ABC):
 
         Raises:
             CubeDomainException: When cube violates physical or geometric rules.
+        """
+        pass
+
+
+class IFaceDetector(ABC):
+    """Contract for detecting 3x3 Rubik's cube face stickers on an image."""
+
+    @abstractmethod
+    def detect(self, image_bytes: bytes) -> FaceScanResult:
+        """Processes raw image bytes and returns sorted 9-sticker face state.
+
+        Raises:
+            ValueError: If image cannot be decoded.
+            RuntimeError: If exactly 9 face stickers cannot be resolved.
         """
         pass

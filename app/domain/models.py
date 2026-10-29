@@ -20,7 +20,6 @@ class FacePosition(str, Enum):
     B = "B"  # Back (Standard: Blue)
 
 
-# Standard WCA default color-to-face mapping (BOY convention)
 DEFAULT_COLOR_TO_FACE: dict[Color, FacePosition] = {
     Color.WHITE: FacePosition.U,
     Color.RED: FacePosition.R,
@@ -29,6 +28,27 @@ DEFAULT_COLOR_TO_FACE: dict[Color, FacePosition] = {
     Color.ORANGE: FacePosition.L,
     Color.BLUE: FacePosition.B,
 }
+
+
+class BoundingBox(BaseModel):
+    x_min: float
+    y_min: float
+    x_max: float
+    y_max: float
+
+
+class DetectedSticker(BaseModel):
+    color: Color
+    confidence: float
+    box: BoundingBox
+    grid_index: int  # 0 to 8 (row-major: top-left = 0, center = 4, bottom-right = 8)
+
+
+class FaceScanResult(BaseModel):
+    stickers: list[Color] = Field(..., min_length=9, max_length=9)
+    details: list[DetectedSticker]
+    center_color: Color
+    is_valid_face: bool = True
 
 
 class FaceState(BaseModel):
@@ -57,11 +77,7 @@ class CubeState(BaseModel):
         self,
         color_mapping: dict[Color, FacePosition] | None = None,
     ) -> str:
-        """Converts 54 stickers to a standard 54-char Kociemba notation string.
-
-        If color_mapping is not provided, it is dynamically resolved
-        from the center sticker of each face.
-        """
+        """Converts 54 stickers to a standard 54-char Kociemba notation string."""
         if color_mapping is None:
             color_mapping = {
                 face_state.center_color: face_pos
