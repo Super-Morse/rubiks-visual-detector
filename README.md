@@ -32,6 +32,8 @@
   <img src="https://img.shields.io/badge/Code%20Style-Ruff-black?style=flat" alt="Ruff" />
 </p>
 
+👉 **Live Analytics Dashboard:** [SonarCloud Project Overview](https://sonarcloud.io/project/overview?id=Super-Morse_rubiks-visual-detector)
+
 ---
 
 ## 📖 Overview
