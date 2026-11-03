@@ -144,3 +144,8 @@ mypy app/
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+<p align="right">
+  <em>Morse Code <span style="letter-spacing: 2px;">..- ._</span></em> 📟
+</p>
