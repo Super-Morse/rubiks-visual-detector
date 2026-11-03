@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rubik's Live AR Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0d0e12;
+            color: #f0f0f5;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Split Screen Layout */
+        #scanner-pane, #cube-pane {
+            flex: 1;
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #scanner-pane {
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        /* Top HUD Bar */
+        .hud-header {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(18, 18, 24, 0.75);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .instruction-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-badge {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* Camera & AR HUD Canvas */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror camera for natural feeling */
+        }
+        #hud-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Lock Progress Circle overlay */
+        .lock-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: rgba(18, 18, 24, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 10px 24px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .lock-bar-bg {
+            width: 120px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .lock-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: #00ff88;
+            transition: width 0.15s ease-out;
+        }
+
+        /* Three.js Container */
+        #cube-container {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        #cube-container:active { cursor: grabbing; }
+
+        .cube-hud {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 30;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background: rgba(28, 28, 36, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: rgba(45, 45, 60, 0.9); }
+        .btn-primary { background: #00ff88; color: #000; border: none; }
+        .btn-primary:hover { background: #00cc6a; }
+
+        /* Final Solved Banner Modal */
+        #result-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(15px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 2rem;
+        }
+        #result-modal h1 { color: #00ff88; font-size: 2.5rem; margin-bottom: 1rem; }
+        #kociemba-string {
+            font-family: monospace;
+            background: #181920;
+            border: 1px solid #333;
+            padding: 1rem;
+            border-radius: 8px;
+            color: #ffaa00;
+            margin: 1.5rem 0;
+            max-width: 600px;
+            word-break: break-all;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT: Camera & AR Target Scanner -->
+    <div id="scanner-pane">
+        <div class="hud-header">
+            <div>
+                <div class="instruction-title" id="step-instruction">Show WHITE Face</div>
+                <div style="font-size: 0.8rem; color: #888; margin-top: 3px;" id="sub-instruction">Green face should point UP</div>
+            </div>
+            <div class="step-badge" id="step-badge">1 / 6</div>
+        </div>
+
+        <div class="video-wrapper">
+            <video id="webcam" playsinline autoplay muted></video>
+            <canvas id="hud-canvas"></canvas>
+        </div>
+
+        <div class="lock-indicator" id="lock-indicator">
+            <span id="lock-label">Align face in frame</span>
+            <div class="lock-bar-bg">
+                <div class="lock-bar-fill" id="lock-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Interactive 3D Rubik's Cube -->
+    <div id="cube-pane">
+        <div id="cube-container"></div>
+        <div class="cube-hud">
+            <button class="btn" id="reset-btn">Reset All</button>
+            <button class="btn btn-primary" id="manual-snap-btn">Capture Now</button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="result-modal">
+        <h1>Cube Scanned Successfully!</h1>
+        <p style="color: #bbb; max-width: 500px;">All 6 faces validated. Kociemba solver sequence generated and ready for the Go/Wasm solver.</p>
+        <div id="kociemba-string">Scanning...</div>
+        <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 30px;" onclick="location.reload()">Scan Another Cube</button>
+    </div>
+
+    <script>
+        // --- 1. Sound Synthesis (Web Audio API - No external mp3s needed) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq = 600, duration = 0.08, type = 'sine') {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+        function playSuccessChime() {
+            playBeep(523.25, 0.1); // C5
+            setTimeout(() => playBeep(659.25, 0.1), 100); // E5
+            setTimeout(() => playBeep(783.99, 0.25), 200); // G5
+        }
+
+        // --- 2. Color Mapping & Standard Steps ---
+        const COLOR_HEX = {
+            white: 0xffffff,
+            yellow: 0xffd500,
+            green: 0x009b48,
+            blue: 0x0046ad,
+            red: 0xb71234,
+            orange: 0xff5800,
+            gray: 0x2c2d35
+        };
+
+        const STEPS = [
+            { face: 'U', targetColor: 'white',  name: 'WHITE Face',  sub: 'Green side pointing FRONT', rotY: 0, rotX: Math.PI / 2 },
+            { face: 'R', targetColor: 'red',    name: 'RED Face',    sub: 'White on TOP, Blue on RIGHT', rotY: -Math.PI / 2, rotX: 0 },
+            { face: 'F', targetColor: 'green',  name: 'GREEN Face',  sub: 'White on TOP, Red on RIGHT', rotY: 0, rotX: 0 },
+            { face: 'D', targetColor: 'yellow', name: 'YELLOW Face', sub: 'Green on TOP', rotY: 0, rotX: -Math.PI / 2 },
+            { face: 'L', targetColor: 'orange', name: 'ORANGE Face', sub: 'White on TOP, Green on RIGHT', rotY: Math.PI / 2, rotX: 0 },
+            { face: 'B', targetColor: 'blue',   name: 'BLUE Face',   sub: 'White on TOP, Orange on RIGHT', rotY: Math.PI, rotX: 0 }
+        ];
+
+        let currentStepIdx = 0;
+        const capturedFaces = {};
+        let isProcessing = false;
+        let stabilityProgress = 0; // 0 to 100%
+
+        // --- 3. Three.js Cube Visualizer ---
+        const container = document.getElementById('cube-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#0d0e12');
+
+        const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(5.5, 4.0, 6.0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(10, 15, 10);
+        scene.add(dirLight);
+
+        // Build 3x3 cube geometry
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+
+        const coreGeo = new THREE.BoxGeometry(2.94, 2.94, 2.94);
+        const coreMat = new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.9 });
+        cubeGroup.add(new THREE.Mesh(coreGeo, coreMat));
+
+        const faceStickers = { U: [], R: [], F: [], D: [], L: [], B: [] };
+        const stickerGeo = new THREE.PlaneGeometry(0.88, 0.88);
+
+        const faceConfigs = [
+            { face: 'U', dir: new THREE.Vector3(0, 1, 0) },
+            { face: 'D', dir: new THREE.Vector3(0, -1, 0) },
+            { face: 'F', dir: new THREE.Vector3(0, 0, 1) },
+            { face: 'B', dir: new THREE.Vector3(0, 0, -1) },
+            { face: 'R', dir: new THREE.Vector3(1, 0, 0) },
+            { face: 'L', dir: new THREE.Vector3(-1, 0, 0) }
+        ];
+
+        faceConfigs.forEach(({ face, dir }) => {
+            for (let v = 1; v >= -1; v--) {      // row: top to bottom
+                for (let u = -1; u <= 1; u++) {  // col: left to right
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: COLOR_HEX.gray,
+                        roughness: 0.35,
+                        side: THREE.DoubleSide
+                    });
+                    const mesh = new THREE.Mesh(stickerGeo, mat);
+                    const offset = 1.48;
+
+                    if (Math.abs(dir.x) > 0) {
+                        mesh.position.set(dir.x * offset, v, -dir.x * u);
+                        mesh.rotation.y = dir.x > 0 ? Math.PI / 2 : -Math.PI / 2;
+                    } else if (Math.abs(dir.y) > 0) {
+                        mesh.position.set(u, dir.y * offset, -dir.y * v);
+                        mesh.rotation.x = dir.y > 0 ? -Math.PI / 2 : Math.PI / 2;
+                    } else {
+                        mesh.position.set(u, v, dir.z * offset);
+                        mesh.rotation.y = dir.z > 0 ? 0 : Math.PI;
+                    }
+
+                    cubeGroup.add(mesh);
+                    faceStickers[face].push(mesh);
+                }
+            }
+        });
+
+        function update3DFaceColors(facePos, colors) {
+            colors.forEach((colName, idx) => {
+                if (faceStickers[facePos][idx]) {
+                    faceStickers[facePos][idx].material.color.setHex(COLOR_HEX[colName] || COLOR_HEX.gray);
+                }
+            });
+        }
+
+        function rotateCubeToStep(stepIdx) {
+            const step = STEPS[stepIdx];
+            // Smoothly target rotation
+            cubeTargetRotX = step.rotX;
+            cubeTargetRotY = step.rotY;
+        }
+
+        let cubeTargetRotX = 0, cubeTargetRotY = 0;
+
+        // --- 4. Camera & Live HUD Overlay ---
+        const video = document.getElementById('webcam');
+        const hudCanvas = document.getElementById('hud-canvas');
+        const hudCtx = hudCanvas.getContext('2d');
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Camera permission denied or camera not found: " + err.message);
+            }
+        }
+        initCamera();
+
+        function drawAROverlay(statusColor = 'rgba(0, 255, 136, 0.8)') {
+            hudCanvas.width = video.clientWidth;
+            hudCanvas.height = video.clientHeight;
+
+            const w = hudCanvas.width;
+            const h = hudCanvas.height;
+            const size = Math.min(w, h) * 0.62;
+            const startX = (w - size) / 2;
+            const startY = (h - size) / 2;
+            const step = size / 3;
+
+            hudCtx.clearRect(0, 0, w, h);
+
+            // Shaded backdrop around box
+            hudCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            hudCtx.fillRect(0, 0, w, startY);
+            hudCtx.fillRect(0, startY + size, w, h - (startY + size));
+            hudCtx.fillRect(0, startY, startX, size);
+            hudCtx.fillRect(startX + size, startY, w - (startX + size), size);
+
+            // 3x3 Grid Outline
+            hudCtx.lineWidth = 3;
+            hudCtx.strokeStyle = statusColor;
+            hudCtx.strokeRect(startX, startY, size, size);
+
+            hudCtx.lineWidth = 1;
+            hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            for (let i = 1; i < 3; i++) {
+                hudCtx.beginPath();
+                hudCtx.moveTo(startX + i * step, startY);
+                hudCtx.lineTo(startX + i * step, startY + size);
+                hudCtx.stroke();
+
+                hudCtx.beginPath();
+                hudCtx.moveTo(startX, startY + i * step);
+                hudCtx.lineTo(startX + size, startY + i * step);
+                hudCtx.stroke();
+            }
+
+            // Center target indicator
+            hudCtx.fillStyle = statusColor;
+            hudCtx.beginPath();
+            hudCtx.arc(startX + 1.5 * step, startY + 1.5 * step, 6, 0, Math.PI * 2);
+            hudCtx.fill();
+        }
+
+        // --- 5. Detection & Smart Auto-Capture Loop ---
+        const offscreenCanvas = document.createElement('canvas');
+        const offCtx = offscreenCanvas.getContext('2d');
+
+        async function captureCurrentFrameBlob() {
+            if (!video.videoWidth) return null;
+            offscreenCanvas.width = 640;
+            offscreenCanvas.height = 640;
+
+            // Crop center square
+            const minDim = Math.min(video.videoWidth, video.videoHeight);
+            const sx = (video.videoWidth - minDim) / 2;
+            const sy = (video.videoHeight - minDim) / 2;
+
+            offCtx.drawImage(video, sx, sy, minDim, minDim, 0, 0, 640, 640);
+            return new Promise(resolve => offscreenCanvas.toBlob(resolve, 'image/jpeg', 0.85));
+        }
+
+        async function runAutoScan() {
+            if (isProcessing || currentStepIdx >= STEPS.length) return;
+
+            const blob = await captureCurrentFrameBlob();
+            if (!blob) return;
+
+            isProcessing = true;
+            const formData = new FormData();
+            formData.append('file', blob, 'frame.jpg');
+
+            try {
+                const res = await fetch('/api/v1/scan-face', { method: 'POST', body: formData });
+                if (res.ok) {
+                    const data = await res.json();
+                    const expectedColor = STEPS[currentStepIdx].targetColor;
+
+                    if (data.center_color === expectedColor) {
+                        // Correct face locked in sight
+                        stabilityProgress += 34; // Needs ~3 consecutive successful scans to lock
+                        drawAROverlay('#00ff88');
+
+                        if (stabilityProgress >= 100) {
+                            lockFace(STEPS[currentStepIdx].face, data.stickers);
+                        }
+                    } else {
+                        // Wrong face presented
+                        stabilityProgress = Math.max(0, stabilityProgress - 20);
+                        drawAROverlay('rgba(255, 170, 0, 0.7)');
+                    }
+                } else {
+                    stabilityProgress = Math.max(0, stabilityProgress - 15);
+                    drawAROverlay('rgba(255, 255, 255, 0.3)');
+                }
+            } catch (err) {
+                stabilityProgress = 0;
+            } finally {
+                document.getElementById('lock-bar').style.width = `${stabilityProgress}%`;
+                isProcessing = false;
+            }
+        }
+
+        setInterval(runAutoScan, 280); // Probe detection 3.5 times per second
+
+        function lockFace(facePos, stickers) {
+            capturedFaces[facePos] = stickers;
+            update3DFaceColors(facePos, stickers);
+            playBeep(880, 0.12);
+
+            currentStepIdx++;
+            stabilityProgress = 0;
+            document.getElementById('lock-bar').style.width = '0%';
+
+            if (currentStepIdx < STEPS.length) {
+                const nextStep = STEPS[currentStepIdx];
+                document.getElementById('step-instruction').innerText = `Show ${nextStep.name}`;
+                document.getElementById('sub-instruction').innerText = nextStep.sub;
+                document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+                rotateCubeToStep(currentStepIdx);
+            } else {
+                finalizeFullScan();
+            }
+        }
+
+        async function finalizeFullScan() {
+            playSuccessChime();
+            document.getElementById('step-instruction').innerText = "Validating Cube...";
+            document.getElementById('lock-indicator').style.display = 'none';
+
+            const payload = {
+                faces: Object.entries(capturedFaces).map(([face, stickers]) => ({ face, stickers }))
+            };
+
+            try {
+                const res = await fetch('/api/v1/validate-cube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.is_valid) {
+                    document.getElementById('result-modal').style.display = 'flex';
+                    document.getElementById('kociemba-string').innerText = data.kociemba_string;
+                } else {
+                    alert("Cube validation failed: " + (data.detail || "Invalid color distribution"));
+                }
+            } catch (e) {
+                alert("Error validating cube: " + e.message);
+            }
+        }
+
+        // Manual snap button
+        document.getElementById('manual-snap-btn').addEventListener('click', async () => {
+            stabilityProgress = 100;
+            await runAutoScan();
+        });
+
+        // Reset
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // --- 6. Render Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth interpolation to step target rotation
+            cubeGroup.rotation.x += (cubeTargetRotX - cubeGroup.rotation.x) * 0.08;
+            cubeGroup.rotation.y += (cubeTargetRotY - cubeGroup.rotation.y) * 0.08;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            drawAROverlay();
+        });
+        video.addEventListener('loadedmetadata', () => drawAROverlay());
+    </script>
+</body>
+</html>
