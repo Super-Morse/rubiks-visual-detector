@@ -498,7 +498,7 @@
                         mesh.position.set(u, dir.y * offset, -dir.y * v);
                         mesh.rotation.x = dir.y > 0 ? -Math.PI / 2 : Math.PI / 2;
                     } else {
-                        mesh.position.set(u, v, dir.z * offset);
+                        mesh.position.set(dir.z > 0 ? u : -u, v, dir.z * offset);
                         mesh.rotation.y = dir.z > 0 ? 0 : Math.PI;
                     }
 
