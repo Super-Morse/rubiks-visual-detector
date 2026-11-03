@@ -64,7 +64,7 @@ def test_real_model_on_empty_image_raises_runtime_error(black_image_bytes):
 
     detector = YoloOnnxFaceDetector(model_path=REAL_MODEL_PATH)
 
-    with pytest.raises(RuntimeError, match="expected at least 9 stickers, but found 0"):
+    with pytest.raises(RuntimeError, match="expected at least 9 stickers, but detected 0"):
         detector.detect(black_image_bytes)
 
 
