@@ -58,25 +58,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(18, 18, 24, 0.85);
+            background: rgba(18, 18, 24, 0.88);
             backdrop-filter: blur(12px);
-            padding: 12px 20px;
+            padding: 14px 20px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .instruction-title {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 800;
             color: #00ff88;
+            transition: color 0.2s;
+        }
+        .instruction-title.waiting-confirmation {
+            color: #ffaa00;
+        }
+        .sub-instruction {
+            font-size: 0.85rem;
+            color: #bbb;
+            margin-top: 4px;
         }
         .step-badge {
             background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
             border: 1px solid #00ff88;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 0.85rem;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .video-wrapper {
@@ -102,7 +111,7 @@
             z-index: 20;
         }
 
-        /* Bottom Controls & Mini Face Preview */
+        /* Bottom Interactive Review Bar */
         .bottom-control-bar {
             position: absolute;
             bottom: 24px;
@@ -112,59 +121,74 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            background: rgba(18, 18, 24, 0.92);
-            backdrop-filter: blur(12px);
-            padding: 10px 18px;
+            background: rgba(18, 18, 24, 0.94);
+            backdrop-filter: blur(14px);
+            padding: 12px 20px;
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
         .mini-grid {
             display: grid;
-            grid-template-columns: repeat(3, 24px);
+            grid-template-columns: repeat(3, 26px);
             grid-gap: 4px;
         }
         .mini-sticker {
-            width: 24px;
-            height: 24px;
-            border-radius: 3px;
-            background: #333;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .mini-sticker:hover { transform: scale(1.15); }
-
-        .lock-bar-bg {
-            width: 100px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.15);
+            width: 26px;
+            height: 26px;
             border-radius: 4px;
-            overflow: hidden;
+            background: #2a2a35;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            transition: transform 0.12s, box-shadow 0.12s;
         }
-        .lock-bar-fill {
-            width: 0%;
-            height: 100%;
-            background: #00ff88;
-            transition: width 0.1s linear;
+        .mini-sticker:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+            z-index: 10;
         }
 
         .btn {
-            background: rgba(35, 35, 45, 0.9);
+            background: rgba(40, 40, 52, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .btn:hover { background: rgba(55, 55, 70, 0.9); }
-        .btn-confirm { background: #00ff88; color: #000; border: none; }
-        .btn-confirm:hover { background: #00cc6a; }
+        .btn:hover { background: rgba(60, 60, 75, 0.9); }
+        .btn:disabled {
+            background: rgba(30, 30, 38, 0.6);
+            color: #666;
+            cursor: not-allowed;
+            border-color: rgba(255,255,255,0.06);
+            box-shadow: none;
+            animation: none;
+        }
 
-        /* Cube Controls HUD (Reset Button) */
+        .btn-confirm {
+            background: #00ff88;
+            color: #000;
+            border: none;
+        }
+        .btn-confirm:hover:not(:disabled) {
+            background: #00e67a;
+            transform: translateY(-1px);
+        }
+        .btn-confirm.ready-pulse {
+            animation: pulse-green 1.2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
         .cube-hud {
             position: absolute;
             bottom: 24px;
@@ -186,7 +210,6 @@
         #cube-container { width: 100%; height: 100%; cursor: grab; }
         #cube-container:active { cursor: grabbing; }
 
-        /* Hard Webcam Block Modal */
         #camera-blocked-modal {
             position: fixed;
             inset: 0;
@@ -202,7 +225,6 @@
         #camera-blocked-modal h2 { color: #ff3344; font-size: 2rem; margin-bottom: 1rem; }
         #camera-blocked-modal p { color: #aaa; max-width: 480px; line-height: 1.5; font-size: 1rem; }
 
-        /* Final Solved Banner Modal */
         #result-modal {
             position: absolute;
             inset: 0;
@@ -221,13 +243,13 @@
             font-family: monospace;
             background: #181920;
             border: 1px solid #333;
-            padding: 1rem;
+            padding: 1.2rem;
             border-radius: 8px;
             color: #ffaa00;
             margin: 1.5rem 0;
-            max-width: 600px;
+            max-width: 620px;
             word-break: break-all;
-            font-size: 1.15rem;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -247,7 +269,7 @@
         <div class="hud-header">
             <div>
                 <div class="instruction-title" id="step-instruction">Show WHITE Face</div>
-                <div style="font-size: 0.8rem; color: #aaa; margin-top: 3px;" id="sub-instruction">Green side pointing FRONT / White on TOP</div>
+                <div class="sub-instruction" id="sub-instruction">Green side pointing FRONT / White on TOP</div>
             </div>
             <div class="step-badge" id="step-badge">1 / 6</div>
         </div>
@@ -258,7 +280,7 @@
         </div>
 
         <div class="bottom-control-bar">
-            <!-- Clickable Mini-Grid: tap any sticker to cycle color if glare confused it -->
+            <!-- Clickable Mini-Grid -->
             <div class="mini-grid" id="mini-grid" title="Click any sticker to cycle color">
                 <div class="mini-sticker" data-idx="0"></div>
                 <div class="mini-sticker" data-idx="1"></div>
@@ -271,11 +293,8 @@
                 <div class="mini-sticker" data-idx="8"></div>
             </div>
 
-            <div class="lock-bar-bg">
-                <div class="lock-bar-fill" id="lock-bar"></div>
-            </div>
-
-            <button class="btn btn-confirm" id="confirm-face-btn">Lock Face</button>
+            <button class="btn btn-confirm" id="confirm-face-btn" disabled>Lock Face</button>
+            <button class="btn" id="rescan-face-btn">Rescan</button>
             <button class="btn" id="prev-face-btn">Back</button>
         </div>
     </div>
@@ -341,10 +360,10 @@
         let currentStepIdx = 0;
         const capturedFaces = {};
         let isProcessing = false;
-        let stabilityCounter = 0;
+        let isFaceFrozenForReview = false; // Prevents auto-rotation until user confirms!
 
         const frameHistory = [];
-        const HISTORY_SIZE = 6;
+        const HISTORY_SIZE = 5;
         let currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
 
         // Three.js Scene Setup
@@ -425,10 +444,11 @@
 
         let cubeTargetRotX = Math.PI / 2, cubeTargetRotY = 0;
 
-        // Camera init
+        // Camera Initialization
         const video = document.getElementById('webcam');
         const hudCanvas = document.getElementById('hud-canvas');
         const hudCtx = hudCanvas.getContext('2d');
+        const confirmBtn = document.getElementById('confirm-face-btn');
 
         async function initCameraStrict() {
             try {
@@ -480,6 +500,7 @@
             }
         }
 
+        // Mini-Grid click-to-cycle (Updates BOTH the mini-grid AND the 3D cube model)
         const miniStickerEls = document.querySelectorAll('.mini-sticker');
         miniStickerEls.forEach((el) => {
             el.addEventListener('click', () => {
@@ -487,7 +508,10 @@
                 const current = currentStickers[idx];
                 const nextIdx = (COLOR_ORDER.indexOf(current) + 1) % COLOR_ORDER.length;
                 currentStickers[idx] = COLOR_ORDER[nextIdx];
+
                 renderMiniGrid();
+                const currentFace = STEPS[currentStepIdx].face;
+                update3DFaceColors(currentFace, currentStickers);
                 playBeep(440, 0.05);
             });
         });
@@ -495,7 +519,7 @@
         function renderMiniGrid() {
             miniStickerEls.forEach((el, idx) => {
                 const col = currentStickers[idx];
-                el.style.background = '#' + (COLOR_HEX[col] || 0x333333).toString(16).padStart(6, '0');
+                el.style.background = '#' + (COLOR_HEX[col] || 0x2a2a35).toString(16).padStart(6, '0');
             });
         }
 
@@ -536,7 +560,8 @@
         }
 
         async function scanFrame() {
-            if (isProcessing || currentStepIdx >= STEPS.length) return;
+            // If already frozen waiting for user to click Lock Face, DO NOT OVERWRITE!
+            if (isProcessing || isFaceFrozenForReview || currentStepIdx >= STEPS.length) return;
 
             const blob = await extractSquareFrameBlob();
             if (!blob) return;
@@ -555,81 +580,125 @@
                     currentStickers = computeConsensusStickers(frameHistory);
                     renderMiniGrid();
 
-                    const expectedCenter = STEPS[currentStepIdx].targetColor;
-                    if (currentStickers[4] === expectedCenter) {
-                        stabilityCounter = Math.min(100, stabilityCounter + 25);
-                        drawARHUD('#00ff88');
+                    const currentFace = STEPS[currentStepIdx].face;
+                    update3DFaceColors(currentFace, currentStickers);
 
-                        if (stabilityCounter >= 100) {
-                            lockCurrentFace(STEPS[currentStepIdx].face, [...currentStickers]);
-                        }
+                    const expectedCenter = STEPS[currentStepIdx].targetColor;
+                    if (currentStickers[4] === expectedCenter && frameHistory.length >= 3) {
+                        // Face is captured! FREEZE & WAIT FOR USER CONFIRMATION!
+                        isFaceFrozenForReview = true;
+                        drawARHUD('#00ff88');
+                        playBeep(660, 0.15);
+
+                        const titleEl = document.getElementById('step-instruction');
+                        titleEl.innerText = "Check Colors & Lock Face";
+                        titleEl.classList.add('waiting-confirmation');
+
+                        document.getElementById('sub-instruction').innerText =
+                            "Click stickers below to adjust if needed, then click 'Lock Face'.";
+
+                        confirmBtn.disabled = false;
+                        confirmBtn.classList.add('ready-pulse');
                     } else {
-                        stabilityCounter = Math.max(0, stabilityCounter - 20);
                         drawARHUD('rgba(255, 170, 0, 0.8)');
                     }
                 } else {
-                    stabilityCounter = Math.max(0, stabilityCounter - 15);
                     drawARHUD('rgba(255, 255, 255, 0.25)');
                 }
             } catch (err) {
-                stabilityCounter = 0;
+                // Keep searching
             } finally {
-                document.getElementById('lock-bar').style.width = `${stabilityCounter}%`;
                 isProcessing = false;
             }
         }
 
-        setInterval(scanFrame, 250);
+        setInterval(scanFrame, 220);
 
-        function lockCurrentFace(facePos, stickers) {
-            capturedFaces[facePos] = stickers;
-            update3DFaceColors(facePos, stickers);
+        // LOCK FACE BUTTON CLICK: ONLY NOW DOES IT ADVANCE!
+        confirmBtn.addEventListener('click', () => {
+            if (!isFaceFrozenForReview && currentStepIdx >= STEPS.length) return;
+
+            const currentFace = STEPS[currentStepIdx].face;
+            capturedFaces[currentFace] = [...currentStickers];
+            update3DFaceColors(currentFace, currentStickers);
             playBeep(880, 0.12);
 
+            confirmBtn.disabled = true;
+            confirmBtn.classList.remove('ready-pulse');
+
+            const titleEl = document.getElementById('step-instruction');
+            titleEl.classList.remove('waiting-confirmation');
+
             currentStepIdx++;
-            stabilityCounter = 0;
             frameHistory.length = 0;
-            document.getElementById('lock-bar').style.width = '0%';
+            isFaceFrozenForReview = false;
 
             if (currentStepIdx < STEPS.length) {
                 const next = STEPS[currentStepIdx];
-                document.getElementById('step-instruction').innerText = `Show ${next.name}`;
+                titleEl.innerText = `Show ${next.name}`;
                 document.getElementById('sub-instruction').innerText = next.sub;
                 document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+
+                // NOW the cube smoothly rotates to the next face!
                 cubeTargetRotX = next.rotX;
                 cubeTargetRotY = next.rotY;
+
+                // Reset mini-grid preview to uncaptured gray
+                currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
+                renderMiniGrid();
             } else {
                 finalizeCube();
             }
-        }
-
-        document.getElementById('confirm-face-btn').addEventListener('click', () => {
-            if (currentStepIdx < STEPS.length) {
-                lockCurrentFace(STEPS[currentStepIdx].face, [...currentStickers]);
-            }
         });
 
+        // RESCAN BUTTON: Unfreeze and resume camera scanning for current face
+        document.getElementById('rescan-face-btn').addEventListener('click', () => {
+            frameHistory.length = 0;
+            isFaceFrozenForReview = false;
+            confirmBtn.disabled = true;
+            confirmBtn.classList.remove('ready-pulse');
+
+            const current = STEPS[currentStepIdx];
+            const titleEl = document.getElementById('step-instruction');
+            titleEl.innerText = `Show ${current.name}`;
+            titleEl.classList.remove('waiting-confirmation');
+            document.getElementById('sub-instruction').innerText = current.sub;
+
+            currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
+            renderMiniGrid();
+            playBeep(350, 0.08);
+        });
+
+        // BACK BUTTON: Step back to previous face
         document.getElementById('prev-face-btn').addEventListener('click', () => {
             if (currentStepIdx > 0) {
                 currentStepIdx--;
                 const prev = STEPS[currentStepIdx];
                 delete capturedFaces[prev.face];
                 frameHistory.length = 0;
-                stabilityCounter = 0;
-                document.getElementById('lock-bar').style.width = '0%';
-                document.getElementById('step-instruction').innerText = `Show ${prev.name}`;
+                isFaceFrozenForReview = false;
+                confirmBtn.disabled = true;
+                confirmBtn.classList.remove('ready-pulse');
+
+                const titleEl = document.getElementById('step-instruction');
+                titleEl.innerText = `Show ${prev.name}`;
+                titleEl.classList.remove('waiting-confirmation');
                 document.getElementById('sub-instruction').innerText = prev.sub;
                 document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+
                 cubeTargetRotX = prev.rotX;
                 cubeTargetRotY = prev.rotY;
+
+                currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
+                renderMiniGrid();
+                playBeep(350, 0.08);
             }
         });
 
-        // Reset Button
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            location.reload();
-        });
+        // RESET BUTTON
+        document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
+        // FINALIZE CUBE
         async function finalizeCube() {
             playChime();
             document.getElementById('step-instruction').innerText = "Validating 54 Stickers...";
@@ -651,7 +720,7 @@
                     document.getElementById('result-modal').style.display = 'flex';
                     document.getElementById('kociemba-string').innerText = data.kociemba_string;
                 } else {
-                    alert("Validation Error: " + (data.detail || "Invalid color distribution. Click 'Back' to fix misdetected face."));
+                    alert("Validation Error: " + (data.detail || "Invalid color distribution. Review faces."));
                     currentStepIdx = 5;
                     document.getElementById('mini-grid').style.display = 'grid';
                     const last = STEPS[5];
