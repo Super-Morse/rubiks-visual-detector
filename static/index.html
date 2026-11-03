@@ -18,7 +18,7 @@
             overflow: hidden;
         }
 
-        /* Top Right Signature - Clean, bold, straight, vibrant orange */
+        /* Top Right Signature - French Blue Border (#318ce7) */
         .brand-signature {
             position: absolute;
             top: 18px;
@@ -29,24 +29,37 @@
             font-weight: 800;
             font-style: normal;
             letter-spacing: 0.5px;
-            background: rgba(18, 18, 24, 0.85);
+            background: rgba(18, 18, 24, 0.9);
             padding: 8px 18px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 88, 0, 0.35);
-            box-shadow: 0 4px 15px rgba(255, 88, 0, 0.15);
+            border: 2px solid #318ce7;
+            box-shadow: 0 0 16px rgba(49, 140, 231, 0.45);
             pointer-events: none;
         }
 
-        #scanner-pane, #cube-pane {
+        #scanner-pane {
             flex: 1;
             position: relative;
             height: 100vh;
             overflow: hidden;
-        }
-        #scanner-pane {
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             background: #000;
+            transition: flex 0.4s ease, opacity 0.4s ease;
+        }
+        #scanner-pane.collapsed {
+            flex: 0;
+            opacity: 0;
+            pointer-events: none;
+            border: none;
+        }
+
+        #cube-pane {
+            flex: 1;
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            transition: flex 0.4s ease;
         }
 
         .hud-header {
@@ -58,26 +71,53 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(18, 18, 24, 0.88);
+            background: rgba(18, 18, 24, 0.9);
             backdrop-filter: blur(12px);
-            padding: 14px 20px;
+            padding: 12px 18px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .instruction-title {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #00ff88;
-            transition: color 0.2s;
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #ffffff;
+            transition: color 0.25s ease;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .instruction-title.waiting-confirmation {
-            color: #ffaa00;
-        }
-        .sub-instruction {
+        
+        /* Gray Orientation Badge: ▲ [color-square] COLOR LOOKS UP */
+        .orientation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #D3D3D3; /* Твій нейтральний світло-сірий */
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            padding: 5px 12px;
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            color: #111116; /* Чіткий контрастний текст на світлому */
             font-size: 0.85rem;
-            color: #bbb;
-            margin-top: 4px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
         }
+        .arrow-symbol {
+            color: #222222;
+            font-size: 0.75rem;
+        }
+        .top-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: inline-block;
+            border: 1px solid rgba(0, 0, 0, 0.25);
+        }
+        #top-text {
+            color: #111116;
+            font-size: 0.85rem;
+            font-weight: 800;
+        }
+
         .step-badge {
             background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
@@ -111,7 +151,6 @@
             z-index: 20;
         }
 
-        /* Bottom Interactive Review Bar */
         .bottom-control-bar {
             position: absolute;
             bottom: 24px;
@@ -170,11 +209,7 @@
             animation: none;
         }
 
-        .btn-confirm {
-            background: #00ff88;
-            color: #000;
-            border: none;
-        }
+        .btn-confirm { background: #00ff88; color: #000; border: none; }
         .btn-confirm:hover:not(:disabled) {
             background: #00e67a;
             transform: translateY(-1px);
@@ -210,6 +245,53 @@
         #cube-container { width: 100%; height: 100%; cursor: grab; }
         #cube-container:active { cursor: grabbing; }
 
+        /* Floating 3D Inspection HUD */
+        #inspection-hud {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 18, 24, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            border-radius: 16px;
+            padding: 20px 30px;
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            max-width: 650px;
+            width: 90%;
+            text-align: center;
+        }
+        #inspection-hud h2 {
+            color: #00ff88;
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+        }
+        #inspection-hud p {
+            color: #bbb;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        #kociemba-display {
+            font-family: monospace;
+            background: #111216;
+            border: 1px solid #333;
+            color: #ffaa00;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            word-break: break-all;
+            user-select: text;
+        }
+        .inspection-actions {
+            display: flex;
+            gap: 12px;
+        }
+
         #camera-blocked-modal {
             position: fixed;
             inset: 0;
@@ -224,38 +306,11 @@
         }
         #camera-blocked-modal h2 { color: #ff3344; font-size: 2rem; margin-bottom: 1rem; }
         #camera-blocked-modal p { color: #aaa; max-width: 480px; line-height: 1.5; font-size: 1rem; }
-
-        #result-modal {
-            position: absolute;
-            inset: 0;
-            background: rgba(10, 10, 15, 0.96);
-            backdrop-filter: blur(15px);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            text-align: center;
-            padding: 2rem;
-        }
-        #result-modal h1 { color: #00ff88; font-size: 2.5rem; margin-bottom: 1rem; }
-        #kociemba-string {
-            font-family: monospace;
-            background: #181920;
-            border: 1px solid #333;
-            padding: 1.2rem;
-            border-radius: 8px;
-            color: #ffaa00;
-            margin: 1.5rem 0;
-            max-width: 620px;
-            word-break: break-all;
-            font-size: 1.2rem;
-        }
     </style>
 </head>
 <body>
 
-    <!-- Signature in the top right corner -->
+    <!-- Signature in the top right corner: French Blue Border (#318ce7) -->
     <div class="brand-signature">Morse Code ..- ._ 📟</div>
 
     <!-- Camera Blocked Screen -->
@@ -264,12 +319,17 @@
         <p>This system operates strictly via real-time computer vision through your webcam. Please connect a camera and grant permission in your browser to proceed.</p>
     </div>
 
-    <!-- LEFT: Camera & Real-Time AR Scanner -->
+    <!-- LEFT: Camera & AR Scanner -->
     <div id="scanner-pane">
         <div class="hud-header">
             <div>
-                <div class="instruction-title" id="step-instruction">Show WHITE Face</div>
-                <div class="sub-instruction" id="sub-instruction">Green side pointing FRONT / White on TOP</div>
+                <div class="instruction-title" id="step-instruction">Show WHITE Face (U)</div>
+                <!-- Clean Dark-Gray Badge: Arrow + Color Square + Color LOOKS UP -->
+                <div class="orientation-badge" id="orientation-badge">
+                    <span class="top-color-dot" id="top-dot" style="background: #0046ad;"></span>
+                    <span id="top-text">BLUE LOOKS UP</span>
+                    <span class="arrow-symbol">▲</span>
+                </div>
             </div>
             <div class="step-badge" id="step-badge">1 / 6</div>
         </div>
@@ -305,14 +365,17 @@
         <div class="cube-hud">
             <button class="btn btn-reset" id="reset-btn">Reset</button>
         </div>
-    </div>
 
-    <!-- Success Modal -->
-    <div id="result-modal">
-        <h1>Cube Scanned Successfully!</h1>
-        <p style="color: #bbb; max-width: 520px;">All 54 stickers validated with physical parity. Ready for Go/Wasm solver.</p>
-        <div id="kociemba-string">Scanning...</div>
-        <button class="btn btn-confirm" onclick="location.reload()" style="font-size: 1rem; padding: 12px 28px;">Scan Another Cube</button>
+        <!-- Floating 3D Inspection HUD -->
+        <div id="inspection-hud">
+            <h2>Cube Validated & Inspected!</h2>
+            <p>Drag the 3D cube with your mouse to visually inspect all 6 faces before solving.</p>
+            <div id="kociemba-display">...</div>
+            <div class="inspection-actions">
+                <button class="btn btn-confirm" id="copy-btn">Copy Sequence</button>
+                <button class="btn" onclick="location.reload()">Scan Another</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -348,19 +411,30 @@
             gray: 0x24242d
         };
 
+        const FACE_TITLE_COLORS = {
+            white: '#ffffff',
+            red: '#ff3b47',
+            green: '#00ff88',
+            yellow: '#ffd600',
+            orange: '#ff6600',
+            blue: '#4da6ff'
+        };
+
         const STEPS = [
-            { face: 'U', targetColor: 'white',  name: 'WHITE Face',  sub: 'Green side pointing FRONT', rotY: 0, rotX: Math.PI / 2 },
-            { face: 'R', targetColor: 'red',    name: 'RED Face',    sub: 'White on TOP, Blue on RIGHT', rotY: -Math.PI / 2, rotX: 0 },
-            { face: 'F', targetColor: 'green',  name: 'GREEN Face',  sub: 'White on TOP, Red on RIGHT', rotY: 0, rotX: 0 },
-            { face: 'D', targetColor: 'yellow', name: 'YELLOW Face', sub: 'Green on TOP', rotY: 0, rotX: -Math.PI / 2 },
-            { face: 'L', targetColor: 'orange', name: 'ORANGE Face', sub: 'White on TOP, Green on RIGHT', rotY: Math.PI / 2, rotX: 0 },
-            { face: 'B', targetColor: 'blue',   name: 'BLUE Face',   sub: 'White on TOP, Orange on RIGHT', rotY: Math.PI, rotX: 0 }
+            { face: 'U', targetColor: 'white',  name: 'WHITE Face (U)',  topColor: 'blue',   topName: 'BLUE LOOKS UP',   topHex: '#4da6ff', rotY: 0, rotX: Math.PI / 2 },
+            { face: 'R', targetColor: 'red',    name: 'RED Face (R)',    topColor: 'white',  topName: 'WHITE LOOKS UP',  topHex: '#ffffff', rotY: -Math.PI / 2, rotX: 0 },
+            { face: 'F', targetColor: 'green',  name: 'GREEN Face (F)',  topColor: 'white',  topName: 'WHITE LOOKS UP',  topHex: '#ffffff', rotY: 0, rotX: 0 },
+            { face: 'D', targetColor: 'yellow', name: 'YELLOW Face (D)', topColor: 'green',  topName: 'GREEN LOOKS UP',  topHex: '#00ff88', rotY: 0, rotX: -Math.PI / 2 },
+            { face: 'L', targetColor: 'orange', name: 'ORANGE Face (L)', topColor: 'white',  topName: 'WHITE LOOKS UP',  topHex: '#ffffff', rotY: Math.PI / 2, rotX: 0 },
+            { face: 'B', targetColor: 'blue',   name: 'BLUE Face (B)',   topColor: 'white',  topName: 'WHITE LOOKS UP',  topHex: '#ffffff', rotY: Math.PI, rotX: 0 }
         ];
 
         let currentStepIdx = 0;
         const capturedFaces = {};
         let isProcessing = false;
-        let isFaceFrozenForReview = false; // Prevents auto-rotation until user confirms!
+        let isFaceFrozenForReview = false;
+        let isScanCompleted = false;
+        let videoStream = null;
 
         const frameHistory = [];
         const HISTORY_SIZE = 5;
@@ -452,10 +526,10 @@
 
         async function initCameraStrict() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
+                videoStream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
                 });
-                video.srcObject = stream;
+                video.srcObject = videoStream;
             } catch (err) {
                 document.getElementById('camera-blocked-modal').style.display = 'flex';
             }
@@ -463,14 +537,15 @@
         initCameraStrict();
 
         function drawARHUD(statusColor = 'rgba(0, 255, 136, 0.8)') {
+            if (isScanCompleted) return;
             hudCanvas.width = video.clientWidth;
             hudCanvas.height = video.clientHeight;
 
             const w = hudCanvas.width;
             const h = hudCanvas.height;
-            const size = Math.min(w, h) * 0.65;
+            const size = Math.min(w, h) * 0.62;
             const startX = (w - size) / 2;
-            const startY = (h - size) / 2;
+            const startY = (h - size) / 2 + 10;
             const step = size / 3;
 
             hudCtx.clearRect(0, 0, w, h);
@@ -498,9 +573,16 @@
                 hudCtx.lineTo(startX + size, startY + i * step);
                 hudCtx.stroke();
             }
+
+            if (currentStepIdx < STEPS.length) {
+                const stepData = STEPS[currentStepIdx];
+                hudCtx.fillStyle = stepData.topHex; /* Колір верхньої грані! */
+                hudCtx.font = "bold 15px -apple-system, sans-serif";
+                hudCtx.textAlign = "center";
+                hudCtx.fillText(`${stepData.topName} ▲`, w / 2, startY - 14);
+            }
         }
 
-        // Mini-Grid click-to-cycle (Updates BOTH the mini-grid AND the 3D cube model)
         const miniStickerEls = document.querySelectorAll('.mini-sticker');
         miniStickerEls.forEach((el) => {
             el.addEventListener('click', () => {
@@ -560,8 +642,7 @@
         }
 
         async function scanFrame() {
-            // If already frozen waiting for user to click Lock Face, DO NOT OVERWRITE!
-            if (isProcessing || isFaceFrozenForReview || currentStepIdx >= STEPS.length) return;
+            if (isProcessing || isFaceFrozenForReview || isScanCompleted || currentStepIdx >= STEPS.length) return;
 
             const blob = await extractSquareFrameBlob();
             if (!blob) return;
@@ -585,17 +666,13 @@
 
                     const expectedCenter = STEPS[currentStepIdx].targetColor;
                     if (currentStickers[4] === expectedCenter && frameHistory.length >= 3) {
-                        // Face is captured! FREEZE & WAIT FOR USER CONFIRMATION!
                         isFaceFrozenForReview = true;
                         drawARHUD('#00ff88');
                         playBeep(660, 0.15);
 
                         const titleEl = document.getElementById('step-instruction');
-                        titleEl.innerText = "Check Colors & Lock Face";
-                        titleEl.classList.add('waiting-confirmation');
-
-                        document.getElementById('sub-instruction').innerText =
-                            "Click stickers below to adjust if needed, then click 'Lock Face'.";
+                        titleEl.innerText = `Verify Colors & Lock Face`;
+                        titleEl.style.color = '#ffaa00';
 
                         confirmBtn.disabled = false;
                         confirmBtn.classList.add('ready-pulse');
@@ -606,7 +683,6 @@
                     drawARHUD('rgba(255, 255, 255, 0.25)');
                 }
             } catch (err) {
-                // Keep searching
             } finally {
                 isProcessing = false;
             }
@@ -614,7 +690,19 @@
 
         setInterval(scanFrame, 220);
 
-        // LOCK FACE BUTTON CLICK: ONLY NOW DOES IT ADVANCE!
+        function updateStepHeader(stepIdx) {
+            const step = STEPS[stepIdx];
+            const titleEl = document.getElementById('step-instruction');
+            titleEl.innerText = `Show ${step.name}`;
+            titleEl.style.color = FACE_TITLE_COLORS[step.targetColor] || '#ffffff';
+
+            document.getElementById('step-badge').innerText = `${stepIdx + 1} / 6`;
+            document.getElementById('top-dot').style.background = step.topHex;
+            document.getElementById('top-text').innerText = step.topName;
+        }
+
+        updateStepHeader(0);
+
         confirmBtn.addEventListener('click', () => {
             if (!isFaceFrozenForReview && currentStepIdx >= STEPS.length) return;
 
@@ -626,24 +714,16 @@
             confirmBtn.disabled = true;
             confirmBtn.classList.remove('ready-pulse');
 
-            const titleEl = document.getElementById('step-instruction');
-            titleEl.classList.remove('waiting-confirmation');
-
             currentStepIdx++;
             frameHistory.length = 0;
             isFaceFrozenForReview = false;
 
             if (currentStepIdx < STEPS.length) {
-                const next = STEPS[currentStepIdx];
-                titleEl.innerText = `Show ${next.name}`;
-                document.getElementById('sub-instruction').innerText = next.sub;
-                document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+                updateStepHeader(currentStepIdx);
 
-                // NOW the cube smoothly rotates to the next face!
-                cubeTargetRotX = next.rotX;
-                cubeTargetRotY = next.rotY;
+                cubeTargetRotX = STEPS[currentStepIdx].rotX;
+                cubeTargetRotY = STEPS[currentStepIdx].rotY;
 
-                // Reset mini-grid preview to uncaptured gray
                 currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
                 renderMiniGrid();
             } else {
@@ -651,25 +731,18 @@
             }
         });
 
-        // RESCAN BUTTON: Unfreeze and resume camera scanning for current face
         document.getElementById('rescan-face-btn').addEventListener('click', () => {
             frameHistory.length = 0;
             isFaceFrozenForReview = false;
             confirmBtn.disabled = true;
             confirmBtn.classList.remove('ready-pulse');
 
-            const current = STEPS[currentStepIdx];
-            const titleEl = document.getElementById('step-instruction');
-            titleEl.innerText = `Show ${current.name}`;
-            titleEl.classList.remove('waiting-confirmation');
-            document.getElementById('sub-instruction').innerText = current.sub;
-
+            updateStepHeader(currentStepIdx);
             currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
             renderMiniGrid();
             playBeep(350, 0.08);
         });
 
-        // BACK BUTTON: Step back to previous face
         document.getElementById('prev-face-btn').addEventListener('click', () => {
             if (currentStepIdx > 0) {
                 currentStepIdx--;
@@ -680,11 +753,7 @@
                 confirmBtn.disabled = true;
                 confirmBtn.classList.remove('ready-pulse');
 
-                const titleEl = document.getElementById('step-instruction');
-                titleEl.innerText = `Show ${prev.name}`;
-                titleEl.classList.remove('waiting-confirmation');
-                document.getElementById('sub-instruction').innerText = prev.sub;
-                document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+                updateStepHeader(currentStepIdx);
 
                 cubeTargetRotX = prev.rotX;
                 cubeTargetRotY = prev.rotY;
@@ -695,14 +764,15 @@
             }
         });
 
-        // RESET BUTTON
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
-        // FINALIZE CUBE
         async function finalizeCube() {
             playChime();
-            document.getElementById('step-instruction').innerText = "Validating 54 Stickers...";
-            document.getElementById('mini-grid').style.display = 'none';
+            isScanCompleted = true;
+
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
 
             const payload = {
                 faces: Object.entries(capturedFaces).map(([face, stickers]) => ({ face, stickers }))
@@ -717,15 +787,28 @@
                 const data = await res.json();
 
                 if (res.ok && data.is_valid) {
-                    document.getElementById('result-modal').style.display = 'flex';
-                    document.getElementById('kociemba-string').innerText = data.kociemba_string;
+                    document.getElementById('scanner-pane').classList.add('collapsed');
+                    setTimeout(() => {
+                        const w = container.clientWidth;
+                        const h = container.clientHeight;
+                        camera.aspect = w / h;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(w, h);
+                    }, 420);
+
+                    document.getElementById('inspection-hud').style.display = 'flex';
+                    document.getElementById('kociemba-display').innerText = data.kociemba_string;
+
+                    document.getElementById('copy-btn').addEventListener('click', () => {
+                        navigator.clipboard.writeText(data.kociemba_string);
+                        playBeep(880, 0.1);
+                        document.getElementById('copy-btn').innerText = "Copied!";
+                        setTimeout(() => document.getElementById('copy-btn').innerText = "Copy Sequence", 1500);
+                    });
                 } else {
                     alert("Validation Error: " + (data.detail || "Invalid color distribution. Review faces."));
                     currentStepIdx = 5;
-                    document.getElementById('mini-grid').style.display = 'grid';
-                    const last = STEPS[5];
-                    document.getElementById('step-instruction').innerText = `Review ${last.name}`;
-                    document.getElementById('step-badge').innerText = `6 / 6`;
+                    updateStepHeader(5);
                 }
             } catch (err) {
                 alert("Failed to communicate with validation service: " + err.message);
@@ -734,8 +817,10 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            cubeGroup.rotation.x += (cubeTargetRotX - cubeGroup.rotation.x) * 0.08;
-            cubeGroup.rotation.y += (cubeTargetRotY - cubeGroup.rotation.y) * 0.08;
+            if (!isScanCompleted) {
+                cubeGroup.rotation.x += (cubeTargetRotX - cubeGroup.rotation.x) * 0.08;
+                cubeGroup.rotation.y += (cubeTargetRotY - cubeGroup.rotation.y) * 0.08;
+            }
             controls.update();
             renderer.render(scene, camera);
         }
