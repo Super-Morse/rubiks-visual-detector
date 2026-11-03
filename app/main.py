@@ -27,7 +27,6 @@ async def health_check():
     return {"status": "ok", "service": settings.PROJECT_NAME}
 
 
-# Mount static frontend directory
 static_dir = Path(__file__).resolve().parent.parent / "static"
 if static_dir.is_dir():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")

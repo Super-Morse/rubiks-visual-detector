@@ -18,22 +18,22 @@
             overflow: hidden;
         }
 
-        /* Top Right Signature - French Blue Border (#318ce7) */
+        /* Top-Right Signature Badge: French Blue border (#318ce7), Vibrant orange text */
         .brand-signature {
             position: absolute;
-            top: 18px;
-            right: 24px;
+            top: 14px;
+            right: 18px;
             z-index: 1000;
             color: #ff5800;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 800;
             font-style: normal;
             letter-spacing: 0.5px;
-            background: rgba(18, 18, 24, 0.9);
-            padding: 8px 18px;
+            background: rgba(18, 18, 24, 0.92);
+            padding: 7px 15px;
             border-radius: 8px;
             border: 2px solid #318ce7;
-            box-shadow: 0 0 16px rgba(49, 140, 231, 0.45);
+            box-shadow: 0 0 14px rgba(49, 140, 231, 0.4);
             pointer-events: none;
         }
 
@@ -64,57 +64,56 @@
 
         .hud-header {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            right: 16px;
+            top: 12px;
+            left: 14px;
+            right: 14px;
             z-index: 30;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(18, 18, 24, 0.9);
+            background: rgba(18, 18, 24, 0.92);
             backdrop-filter: blur(12px);
-            padding: 12px 18px;
+            padding: 9px 15px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .instruction-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 900;
             color: #ffffff;
             transition: color 0.25s ease;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
         
-        /* Gray Orientation Badge: ▲ [color-square] COLOR LOOKS UP */
         .orientation-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: #D3D3D3; /* Твій нейтральний світло-сірий */
-            border: 1px solid rgba(0, 0, 0, 0.15);
-            padding: 5px 12px;
-            border-radius: 8px;
-            margin-top: 5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            color: #111116; /* Чіткий контрастний текст на світлому */
-            font-size: 0.85rem;
+            gap: 7px;
+            background: #D3D3D3;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            padding: 3px 9px;
+            border-radius: 6px;
+            margin-top: 3px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            color: #111116;
+            font-size: 0.8rem;
             font-weight: 800;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
         .arrow-symbol {
             color: #222222;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
         .top-color-dot {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border-radius: 3px;
             display: inline-block;
             border: 1px solid rgba(0, 0, 0, 0.25);
         }
         #top-text {
             color: #111116;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 800;
         }
 
@@ -122,9 +121,9 @@
             background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
             border: 1px solid #00ff88;
-            padding: 5px 14px;
+            padding: 4px 11px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 800;
         }
 
@@ -151,40 +150,64 @@
             z-index: 20;
         }
 
-        .bottom-control-bar {
+        /* Unified Bottom Floating Container: Prevents Any Overlap */
+        .bottom-panel-container {
             position: absolute;
-            bottom: 24px;
+            bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 40;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .control-hint {
             background: rgba(18, 18, 24, 0.94);
-            backdrop-filter: blur(14px);
-            padding: 12px 20px;
-            border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.74rem;
+            color: #ffaa00;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+
+        .bottom-control-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(18, 18, 24, 0.95);
+            backdrop-filter: blur(14px);
+            padding: 7px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            pointer-events: auto;
         }
 
         .mini-grid {
             display: grid;
-            grid-template-columns: repeat(3, 26px);
-            grid-gap: 4px;
+            grid-template-columns: repeat(3, 20px);
+            grid-gap: 3px;
         }
         .mini-sticker {
-            width: 26px;
-            height: 26px;
-            border-radius: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
             background: #2a2a35;
             border: 1px solid rgba(255, 255, 255, 0.25);
             cursor: pointer;
             transition: transform 0.12s, box-shadow 0.12s;
         }
         .mini-sticker:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+            transform: scale(1.25);
+            box-shadow: 0 0 6px rgba(255,255,255,0.5);
             z-index: 10;
         }
 
@@ -192,9 +215,9 @@
             background: rgba(40, 40, 52, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 0.88rem;
+            padding: 7px 13px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
@@ -220,14 +243,14 @@
 
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-            70% { box-shadow: 0 0 0 12px rgba(0, 255, 136, 0); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
         }
 
         .cube-hud {
             position: absolute;
-            bottom: 24px;
-            right: 24px;
+            bottom: 18px;
+            right: 18px;
             z-index: 30;
             display: flex;
             gap: 10px;
@@ -245,7 +268,7 @@
         #cube-container { width: 100%; height: 100%; cursor: grab; }
         #cube-container:active { cursor: grabbing; }
 
-        /* Floating 3D Inspection HUD */
+        /* Fullscreen Inspection HUD */
         #inspection-hud {
             position: absolute;
             top: 24px;
@@ -256,7 +279,7 @@
             border: 1px solid rgba(0, 255, 136, 0.4);
             box-shadow: 0 15px 40px rgba(0,0,0,0.8);
             border-radius: 16px;
-            padding: 20px 30px;
+            padding: 18px 26px;
             z-index: 500;
             display: none;
             flex-direction: column;
@@ -267,12 +290,12 @@
         }
         #inspection-hud h2 {
             color: #00ff88;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             margin-bottom: 6px;
         }
         #inspection-hud p {
             color: #bbb;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             margin-bottom: 12px;
         }
         #kociemba-display {
@@ -280,10 +303,10 @@
             background: #111216;
             border: 1px solid #333;
             color: #ffaa00;
-            padding: 10px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
-            font-size: 1rem;
-            margin-bottom: 14px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
             word-break: break-all;
             user-select: text;
         }
@@ -304,13 +327,13 @@
             text-align: center;
             padding: 2rem;
         }
-        #camera-blocked-modal h2 { color: #ff3344; font-size: 2rem; margin-bottom: 1rem; }
-        #camera-blocked-modal p { color: #aaa; max-width: 480px; line-height: 1.5; font-size: 1rem; }
+        #camera-blocked-modal h2 { color: #ff3344; font-size: 1.8rem; margin-bottom: 1rem; }
+        #camera-blocked-modal p { color: #aaa; max-width: 460px; line-height: 1.5; font-size: 0.95rem; }
     </style>
 </head>
 <body>
 
-    <!-- Signature in the top right corner: French Blue Border (#318ce7) -->
+    <!-- Signature Badge in the top right viewport -->
     <div class="brand-signature">Morse Code ..- ._ 📟</div>
 
     <!-- Camera Blocked Screen -->
@@ -324,7 +347,6 @@
         <div class="hud-header">
             <div>
                 <div class="instruction-title" id="step-instruction">Show WHITE Face (U)</div>
-                <!-- Clean Dark-Gray Badge: Arrow + Color Square + Color LOOKS UP -->
                 <div class="orientation-badge" id="orientation-badge">
                     <span class="top-color-dot" id="top-dot" style="background: #0046ad;"></span>
                     <span id="top-text">BLUE LOOKS UP</span>
@@ -339,23 +361,28 @@
             <canvas id="hud-canvas"></canvas>
         </div>
 
-        <div class="bottom-control-bar">
-            <!-- Clickable Mini-Grid -->
-            <div class="mini-grid" id="mini-grid" title="Click any sticker to cycle color">
-                <div class="mini-sticker" data-idx="0"></div>
-                <div class="mini-sticker" data-idx="1"></div>
-                <div class="mini-sticker" data-idx="2"></div>
-                <div class="mini-sticker" data-idx="3"></div>
-                <div class="mini-sticker" data-idx="4"></div>
-                <div class="mini-sticker" data-idx="5"></div>
-                <div class="mini-sticker" data-idx="6"></div>
-                <div class="mini-sticker" data-idx="7"></div>
-                <div class="mini-sticker" data-idx="8"></div>
+        <!-- Unified bottom panel: Hint is strictly placed ABOVE the buttons -->
+        <div class="bottom-panel-container" id="bottom-panel-container">
+            <div class="control-hint" id="control-hint">
+                💡 Click any sticker to cycle color &bull; Click 'Lock Face' to confirm
             </div>
+            <div class="bottom-control-bar">
+                <div class="mini-grid" id="mini-grid" title="Click any sticker to cycle color">
+                    <div class="mini-sticker" data-idx="0"></div>
+                    <div class="mini-sticker" data-idx="1"></div>
+                    <div class="mini-sticker" data-idx="2"></div>
+                    <div class="mini-sticker" data-idx="3"></div>
+                    <div class="mini-sticker" data-idx="4"></div>
+                    <div class="mini-sticker" data-idx="5"></div>
+                    <div class="mini-sticker" data-idx="6"></div>
+                    <div class="mini-sticker" data-idx="7"></div>
+                    <div class="mini-sticker" data-idx="8"></div>
+                </div>
 
-            <button class="btn btn-confirm" id="confirm-face-btn" disabled>Lock Face</button>
-            <button class="btn" id="rescan-face-btn">Rescan</button>
-            <button class="btn" id="prev-face-btn">Back</button>
+                <button class="btn btn-confirm" id="confirm-face-btn" disabled>Lock Face</button>
+                <button class="btn" id="rescan-face-btn">Rescan</button>
+                <button class="btn" id="prev-face-btn">Back</button>
+            </div>
         </div>
     </div>
 
@@ -498,6 +525,7 @@
                         mesh.position.set(u, dir.y * offset, -dir.y * v);
                         mesh.rotation.x = dir.y > 0 ? -Math.PI / 2 : Math.PI / 2;
                     } else {
+                        // Invert horizontal axis for Back face (dir.z < 0) to resolve mirroring
                         mesh.position.set(dir.z > 0 ? u : -u, v, dir.z * offset);
                         mesh.rotation.y = dir.z > 0 ? 0 : Math.PI;
                     }
@@ -536,6 +564,7 @@
         }
         initCameraStrict();
 
+        // Dynamically scaled AR HUD: Never overlaps with top header or bottom controls
         function drawARHUD(statusColor = 'rgba(0, 255, 136, 0.8)') {
             if (isScanCompleted) return;
             hudCanvas.width = video.clientWidth;
@@ -543,14 +572,21 @@
 
             const w = hudCanvas.width;
             const h = hudCanvas.height;
-            const size = Math.min(w, h) * 0.62;
-            const startX = (w - size) / 2;
-            const startY = (h - size) / 2 + 10;
+
+            // Header height ~68px; Bottom panel height ~95px; Safe zone = between Y=78 and Y=(h - 105)
+            const topMargin = 80;
+            const bottomMargin = 105;
+            const safeZoneHeight = Math.max(140, h - topMargin - bottomMargin);
+
+            // Compute ideal square size ensuring plenty of breathing room
+            const size = Math.floor(Math.min(w * 0.65, safeZoneHeight * 0.88, 270));
+            const startX = Math.floor((w - size) / 2);
+            const startY = Math.floor(topMargin + (safeZoneHeight - size) / 2);
             const step = size / 3;
 
             hudCtx.clearRect(0, 0, w, h);
 
-            hudCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            hudCtx.fillStyle = 'rgba(0, 0, 0, 0.40)';
             hudCtx.fillRect(0, 0, w, startY);
             hudCtx.fillRect(0, startY + size, w, h - (startY + size));
             hudCtx.fillRect(0, startY, startX, size);
@@ -574,12 +610,13 @@
                 hudCtx.stroke();
             }
 
+            // Top direction indicator dynamically colored to active top face
             if (currentStepIdx < STEPS.length) {
                 const stepData = STEPS[currentStepIdx];
-                hudCtx.fillStyle = stepData.topHex; /* Колір верхньої грані! */
-                hudCtx.font = "bold 15px -apple-system, sans-serif";
+                hudCtx.fillStyle = stepData.topHex;
+                hudCtx.font = "bold 13px -apple-system, sans-serif";
                 hudCtx.textAlign = "center";
-                hudCtx.fillText(`${stepData.topName} ▲`, w / 2, startY - 14);
+                hudCtx.fillText(`${stepData.topName} ▲`, w / 2, startY - 10);
             }
         }
 
@@ -769,6 +806,9 @@
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
+
+            const bottomPanel = document.getElementById('bottom-panel-container');
+            if (bottomPanel) bottomPanel.style.display = 'none';
 
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
