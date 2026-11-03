@@ -10,6 +10,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal;
             background: #0d0e12;
             color: #f0f0f5;
             height: 100vh;
@@ -17,7 +18,25 @@
             overflow: hidden;
         }
 
-        /* Split Screen Layout */
+        /* Top Right Signature - Clean, bold, straight, vibrant orange */
+        .brand-signature {
+            position: absolute;
+            top: 18px;
+            right: 24px;
+            z-index: 1000;
+            color: #ff5800;
+            font-size: 1.15rem;
+            font-weight: 800;
+            font-style: normal;
+            letter-spacing: 0.5px;
+            background: rgba(18, 18, 24, 0.85);
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 88, 0, 0.35);
+            box-shadow: 0 4px 15px rgba(255, 88, 0, 0.15);
+            pointer-events: none;
+        }
+
         #scanner-pane, #cube-pane {
             flex: 1;
             position: relative;
@@ -27,11 +46,9 @@
         #scanner-pane {
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
-            flex-direction: column;
             background: #000;
         }
 
-        /* Top HUD Bar */
         .hud-header {
             position: absolute;
             top: 16px;
@@ -41,31 +58,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(18, 18, 24, 0.75);
+            background: rgba(18, 18, 24, 0.85);
             backdrop-filter: blur(12px);
             padding: 12px 20px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .instruction-title {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1.15rem;
+            font-weight: 800;
             color: #00ff88;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
         .step-badge {
             background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
             border: 1px solid #00ff88;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 700;
         }
 
-        /* Camera & AR HUD Canvas */
         .video-wrapper {
             position: relative;
             width: 100%;
@@ -78,7 +91,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror camera for natural feeling */
         }
         #hud-canvas {
             position: absolute;
@@ -90,27 +102,41 @@
             z-index: 20;
         }
 
-        /* Lock Progress Circle overlay */
-        .lock-indicator {
+        /* Bottom Controls & Mini Face Preview */
+        .bottom-control-bar {
             position: absolute;
-            bottom: 30px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 30;
-            background: rgba(18, 18, 24, 0.85);
-            backdrop-filter: blur(8px);
-            padding: 10px 24px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #aaa;
+            z-index: 40;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            background: rgba(18, 18, 24, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 24px);
+            grid-gap: 4px;
+        }
+        .mini-sticker {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            background: #333;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .mini-sticker:hover { transform: scale(1.15); }
+
         .lock-bar-bg {
-            width: 120px;
+            width: 100px;
             height: 8px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 4px;
@@ -120,45 +146,67 @@
             width: 0%;
             height: 100%;
             background: #00ff88;
-            transition: width 0.15s ease-out;
+            transition: width 0.1s linear;
         }
 
-        /* Three.js Container */
-        #cube-container {
-            width: 100%;
-            height: 100%;
-            cursor: grab;
-        }
-        #cube-container:active { cursor: grabbing; }
-
-        .cube-hud {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 30;
-            display: flex;
-            gap: 10px;
-        }
         .btn {
-            background: rgba(28, 28, 36, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(35, 35, 45, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 10px 18px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .btn:hover { background: rgba(45, 45, 60, 0.9); }
-        .btn-primary { background: #00ff88; color: #000; border: none; }
-        .btn-primary:hover { background: #00cc6a; }
+        .btn:hover { background: rgba(55, 55, 70, 0.9); }
+        .btn-confirm { background: #00ff88; color: #000; border: none; }
+        .btn-confirm:hover { background: #00cc6a; }
+
+        /* Cube Controls HUD (Reset Button) */
+        .cube-hud {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 30;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-reset {
+            background: rgba(255, 50, 50, 0.15);
+            border: 1px solid rgba(255, 70, 70, 0.4);
+            color: #ff5566;
+        }
+        .btn-reset:hover {
+            background: rgba(255, 50, 50, 0.3);
+            color: #fff;
+        }
+
+        #cube-container { width: 100%; height: 100%; cursor: grab; }
+        #cube-container:active { cursor: grabbing; }
+
+        /* Hard Webcam Block Modal */
+        #camera-blocked-modal {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0f;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            text-align: center;
+            padding: 2rem;
+        }
+        #camera-blocked-modal h2 { color: #ff3344; font-size: 2rem; margin-bottom: 1rem; }
+        #camera-blocked-modal p { color: #aaa; max-width: 480px; line-height: 1.5; font-size: 1rem; }
 
         /* Final Solved Banner Modal */
         #result-modal {
             position: absolute;
             inset: 0;
-            background: rgba(10, 10, 15, 0.95);
+            background: rgba(10, 10, 15, 0.96);
             backdrop-filter: blur(15px);
             display: none;
             flex-direction: column;
@@ -179,18 +227,27 @@
             margin: 1.5rem 0;
             max-width: 600px;
             word-break: break-all;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- LEFT: Camera & AR Target Scanner -->
+    <!-- Signature in the top right corner -->
+    <div class="brand-signature">Morse Code ..- ._ 📟</div>
+
+    <!-- Camera Blocked Screen -->
+    <div id="camera-blocked-modal">
+        <h2>Webcam Access Required</h2>
+        <p>This system operates strictly via real-time computer vision through your webcam. Please connect a camera and grant permission in your browser to proceed.</p>
+    </div>
+
+    <!-- LEFT: Camera & Real-Time AR Scanner -->
     <div id="scanner-pane">
         <div class="hud-header">
             <div>
                 <div class="instruction-title" id="step-instruction">Show WHITE Face</div>
-                <div style="font-size: 0.8rem; color: #888; margin-top: 3px;" id="sub-instruction">Green face should point UP</div>
+                <div style="font-size: 0.8rem; color: #aaa; margin-top: 3px;" id="sub-instruction">Green side pointing FRONT / White on TOP</div>
             </div>
             <div class="step-badge" id="step-badge">1 / 6</div>
         </div>
@@ -200,11 +257,26 @@
             <canvas id="hud-canvas"></canvas>
         </div>
 
-        <div class="lock-indicator" id="lock-indicator">
-            <span id="lock-label">Align face in frame</span>
+        <div class="bottom-control-bar">
+            <!-- Clickable Mini-Grid: tap any sticker to cycle color if glare confused it -->
+            <div class="mini-grid" id="mini-grid" title="Click any sticker to cycle color">
+                <div class="mini-sticker" data-idx="0"></div>
+                <div class="mini-sticker" data-idx="1"></div>
+                <div class="mini-sticker" data-idx="2"></div>
+                <div class="mini-sticker" data-idx="3"></div>
+                <div class="mini-sticker" data-idx="4"></div>
+                <div class="mini-sticker" data-idx="5"></div>
+                <div class="mini-sticker" data-idx="6"></div>
+                <div class="mini-sticker" data-idx="7"></div>
+                <div class="mini-sticker" data-idx="8"></div>
+            </div>
+
             <div class="lock-bar-bg">
                 <div class="lock-bar-fill" id="lock-bar"></div>
             </div>
+
+            <button class="btn btn-confirm" id="confirm-face-btn">Lock Face</button>
+            <button class="btn" id="prev-face-btn">Back</button>
         </div>
     </div>
 
@@ -212,29 +284,27 @@
     <div id="cube-pane">
         <div id="cube-container"></div>
         <div class="cube-hud">
-            <button class="btn" id="reset-btn">Reset All</button>
-            <button class="btn btn-primary" id="manual-snap-btn">Capture Now</button>
+            <button class="btn btn-reset" id="reset-btn">Reset</button>
         </div>
     </div>
 
     <!-- Success Modal -->
     <div id="result-modal">
         <h1>Cube Scanned Successfully!</h1>
-        <p style="color: #bbb; max-width: 500px;">All 6 faces validated. Kociemba solver sequence generated and ready for the Go/Wasm solver.</p>
+        <p style="color: #bbb; max-width: 520px;">All 54 stickers validated with physical parity. Ready for Go/Wasm solver.</p>
         <div id="kociemba-string">Scanning...</div>
-        <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 30px;" onclick="location.reload()">Scan Another Cube</button>
+        <button class="btn btn-confirm" onclick="location.reload()" style="font-size: 1rem; padding: 12px 28px;">Scan Another Cube</button>
     </div>
 
     <script>
-        // --- 1. Sound Synthesis (Web Audio API - No external mp3s needed) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playBeep(freq = 600, duration = 0.08, type = 'sine') {
+        function playBeep(freq = 600, duration = 0.08) {
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = type;
+                osc.type = 'sine';
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
@@ -242,13 +312,13 @@
                 osc.stop(audioCtx.currentTime + duration);
             } catch (e) {}
         }
-        function playSuccessChime() {
-            playBeep(523.25, 0.1); // C5
-            setTimeout(() => playBeep(659.25, 0.1), 100); // E5
-            setTimeout(() => playBeep(783.99, 0.25), 200); // G5
+        function playChime() {
+            playBeep(523.25, 0.1);
+            setTimeout(() => playBeep(659.25, 0.1), 100);
+            setTimeout(() => playBeep(783.99, 0.25), 200);
         }
 
-        // --- 2. Color Mapping & Standard Steps ---
+        const COLOR_ORDER = ['white', 'yellow', 'green', 'blue', 'red', 'orange'];
         const COLOR_HEX = {
             white: 0xffffff,
             yellow: 0xffd500,
@@ -256,7 +326,7 @@
             blue: 0x0046ad,
             red: 0xb71234,
             orange: 0xff5800,
-            gray: 0x2c2d35
+            gray: 0x24242d
         };
 
         const STEPS = [
@@ -271,9 +341,13 @@
         let currentStepIdx = 0;
         const capturedFaces = {};
         let isProcessing = false;
-        let stabilityProgress = 0; // 0 to 100%
+        let stabilityCounter = 0;
 
-        // --- 3. Three.js Cube Visualizer ---
+        const frameHistory = [];
+        const HISTORY_SIZE = 6;
+        let currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
+
+        // Three.js Scene Setup
         const container = document.getElementById('cube-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#0d0e12');
@@ -289,12 +363,11 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.85));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
         dirLight.position.set(10, 15, 10);
         scene.add(dirLight);
 
-        // Build 3x3 cube geometry
         const cubeGroup = new THREE.Group();
         scene.add(cubeGroup);
 
@@ -315,8 +388,8 @@
         ];
 
         faceConfigs.forEach(({ face, dir }) => {
-            for (let v = 1; v >= -1; v--) {      // row: top to bottom
-                for (let u = -1; u <= 1; u++) {  // col: left to right
+            for (let v = 1; v >= -1; v--) {
+                for (let u = -1; u <= 1; u++) {
                     const mat = new THREE.MeshStandardMaterial({
                         color: COLOR_HEX.gray,
                         roughness: 0.35,
@@ -350,59 +423,50 @@
             });
         }
 
-        function rotateCubeToStep(stepIdx) {
-            const step = STEPS[stepIdx];
-            // Smoothly target rotation
-            cubeTargetRotX = step.rotX;
-            cubeTargetRotY = step.rotY;
-        }
+        let cubeTargetRotX = Math.PI / 2, cubeTargetRotY = 0;
 
-        let cubeTargetRotX = 0, cubeTargetRotY = 0;
-
-        // --- 4. Camera & Live HUD Overlay ---
+        // Camera init
         const video = document.getElementById('webcam');
         const hudCanvas = document.getElementById('hud-canvas');
         const hudCtx = hudCanvas.getContext('2d');
 
-        async function initCamera() {
+        async function initCameraStrict() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
                 });
                 video.srcObject = stream;
             } catch (err) {
-                alert("Camera permission denied or camera not found: " + err.message);
+                document.getElementById('camera-blocked-modal').style.display = 'flex';
             }
         }
-        initCamera();
+        initCameraStrict();
 
-        function drawAROverlay(statusColor = 'rgba(0, 255, 136, 0.8)') {
+        function drawARHUD(statusColor = 'rgba(0, 255, 136, 0.8)') {
             hudCanvas.width = video.clientWidth;
             hudCanvas.height = video.clientHeight;
 
             const w = hudCanvas.width;
             const h = hudCanvas.height;
-            const size = Math.min(w, h) * 0.62;
+            const size = Math.min(w, h) * 0.65;
             const startX = (w - size) / 2;
             const startY = (h - size) / 2;
             const step = size / 3;
 
             hudCtx.clearRect(0, 0, w, h);
 
-            // Shaded backdrop around box
             hudCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             hudCtx.fillRect(0, 0, w, startY);
             hudCtx.fillRect(0, startY + size, w, h - (startY + size));
             hudCtx.fillRect(0, startY, startX, size);
             hudCtx.fillRect(startX + size, startY, w - (startX + size), size);
 
-            // 3x3 Grid Outline
             hudCtx.lineWidth = 3;
             hudCtx.strokeStyle = statusColor;
             hudCtx.strokeRect(startX, startY, size, size);
 
             hudCtx.lineWidth = 1;
-            hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             for (let i = 1; i < 3; i++) {
                 hudCtx.beginPath();
                 hudCtx.moveTo(startX + i * step, startY);
@@ -414,36 +478,67 @@
                 hudCtx.lineTo(startX + size, startY + i * step);
                 hudCtx.stroke();
             }
-
-            // Center target indicator
-            hudCtx.fillStyle = statusColor;
-            hudCtx.beginPath();
-            hudCtx.arc(startX + 1.5 * step, startY + 1.5 * step, 6, 0, Math.PI * 2);
-            hudCtx.fill();
         }
 
-        // --- 5. Detection & Smart Auto-Capture Loop ---
-        const offscreenCanvas = document.createElement('canvas');
-        const offCtx = offscreenCanvas.getContext('2d');
+        const miniStickerEls = document.querySelectorAll('.mini-sticker');
+        miniStickerEls.forEach((el) => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.getAttribute('data-idx'), 10);
+                const current = currentStickers[idx];
+                const nextIdx = (COLOR_ORDER.indexOf(current) + 1) % COLOR_ORDER.length;
+                currentStickers[idx] = COLOR_ORDER[nextIdx];
+                renderMiniGrid();
+                playBeep(440, 0.05);
+            });
+        });
 
-        async function captureCurrentFrameBlob() {
+        function renderMiniGrid() {
+            miniStickerEls.forEach((el, idx) => {
+                const col = currentStickers[idx];
+                el.style.background = '#' + (COLOR_HEX[col] || 0x333333).toString(16).padStart(6, '0');
+            });
+        }
+
+        function computeConsensusStickers(history) {
+            const consensus = [];
+            for (let i = 0; i < 9; i++) {
+                const counts = {};
+                history.forEach(scan => {
+                    const c = scan[i];
+                    counts[c] = (counts[c] || 0) + 1;
+                });
+                let bestColor = 'white', maxCount = -1;
+                for (const [col, count] of Object.entries(counts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        bestColor = col;
+                    }
+                }
+                consensus.push(bestColor);
+            }
+            return consensus;
+        }
+
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+
+        async function extractSquareFrameBlob() {
             if (!video.videoWidth) return null;
-            offscreenCanvas.width = 640;
-            offscreenCanvas.height = 640;
+            offCanvas.width = 640;
+            offCanvas.height = 640;
 
-            // Crop center square
             const minDim = Math.min(video.videoWidth, video.videoHeight);
             const sx = (video.videoWidth - minDim) / 2;
             const sy = (video.videoHeight - minDim) / 2;
 
             offCtx.drawImage(video, sx, sy, minDim, minDim, 0, 0, 640, 640);
-            return new Promise(resolve => offscreenCanvas.toBlob(resolve, 'image/jpeg', 0.85));
+            return new Promise(resolve => offCanvas.toBlob(resolve, 'image/jpeg', 0.88));
         }
 
-        async function runAutoScan() {
+        async function scanFrame() {
             if (isProcessing || currentStepIdx >= STEPS.length) return;
 
-            const blob = await captureCurrentFrameBlob();
+            const blob = await extractSquareFrameBlob();
             if (!blob) return;
 
             isProcessing = true;
@@ -454,59 +549,91 @@
                 const res = await fetch('/api/v1/scan-face', { method: 'POST', body: formData });
                 if (res.ok) {
                     const data = await res.json();
-                    const expectedColor = STEPS[currentStepIdx].targetColor;
+                    frameHistory.push(data.stickers);
+                    if (frameHistory.length > HISTORY_SIZE) frameHistory.shift();
 
-                    if (data.center_color === expectedColor) {
-                        // Correct face locked in sight
-                        stabilityProgress += 34; // Needs ~3 consecutive successful scans to lock
-                        drawAROverlay('#00ff88');
+                    currentStickers = computeConsensusStickers(frameHistory);
+                    renderMiniGrid();
 
-                        if (stabilityProgress >= 100) {
-                            lockFace(STEPS[currentStepIdx].face, data.stickers);
+                    const expectedCenter = STEPS[currentStepIdx].targetColor;
+                    if (currentStickers[4] === expectedCenter) {
+                        stabilityCounter = Math.min(100, stabilityCounter + 25);
+                        drawARHUD('#00ff88');
+
+                        if (stabilityCounter >= 100) {
+                            lockCurrentFace(STEPS[currentStepIdx].face, [...currentStickers]);
                         }
                     } else {
-                        // Wrong face presented
-                        stabilityProgress = Math.max(0, stabilityProgress - 20);
-                        drawAROverlay('rgba(255, 170, 0, 0.7)');
+                        stabilityCounter = Math.max(0, stabilityCounter - 20);
+                        drawARHUD('rgba(255, 170, 0, 0.8)');
                     }
                 } else {
-                    stabilityProgress = Math.max(0, stabilityProgress - 15);
-                    drawAROverlay('rgba(255, 255, 255, 0.3)');
+                    stabilityCounter = Math.max(0, stabilityCounter - 15);
+                    drawARHUD('rgba(255, 255, 255, 0.25)');
                 }
             } catch (err) {
-                stabilityProgress = 0;
+                stabilityCounter = 0;
             } finally {
-                document.getElementById('lock-bar').style.width = `${stabilityProgress}%`;
+                document.getElementById('lock-bar').style.width = `${stabilityCounter}%`;
                 isProcessing = false;
             }
         }
 
-        setInterval(runAutoScan, 280); // Probe detection 3.5 times per second
+        setInterval(scanFrame, 250);
 
-        function lockFace(facePos, stickers) {
+        function lockCurrentFace(facePos, stickers) {
             capturedFaces[facePos] = stickers;
             update3DFaceColors(facePos, stickers);
             playBeep(880, 0.12);
 
             currentStepIdx++;
-            stabilityProgress = 0;
+            stabilityCounter = 0;
+            frameHistory.length = 0;
             document.getElementById('lock-bar').style.width = '0%';
 
             if (currentStepIdx < STEPS.length) {
-                const nextStep = STEPS[currentStepIdx];
-                document.getElementById('step-instruction').innerText = `Show ${nextStep.name}`;
-                document.getElementById('sub-instruction').innerText = nextStep.sub;
+                const next = STEPS[currentStepIdx];
+                document.getElementById('step-instruction').innerText = `Show ${next.name}`;
+                document.getElementById('sub-instruction').innerText = next.sub;
                 document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
-                rotateCubeToStep(currentStepIdx);
+                cubeTargetRotX = next.rotX;
+                cubeTargetRotY = next.rotY;
             } else {
-                finalizeFullScan();
+                finalizeCube();
             }
         }
 
-        async function finalizeFullScan() {
-            playSuccessChime();
-            document.getElementById('step-instruction').innerText = "Validating Cube...";
-            document.getElementById('lock-indicator').style.display = 'none';
+        document.getElementById('confirm-face-btn').addEventListener('click', () => {
+            if (currentStepIdx < STEPS.length) {
+                lockCurrentFace(STEPS[currentStepIdx].face, [...currentStickers]);
+            }
+        });
+
+        document.getElementById('prev-face-btn').addEventListener('click', () => {
+            if (currentStepIdx > 0) {
+                currentStepIdx--;
+                const prev = STEPS[currentStepIdx];
+                delete capturedFaces[prev.face];
+                frameHistory.length = 0;
+                stabilityCounter = 0;
+                document.getElementById('lock-bar').style.width = '0%';
+                document.getElementById('step-instruction').innerText = `Show ${prev.name}`;
+                document.getElementById('sub-instruction').innerText = prev.sub;
+                document.getElementById('step-badge').innerText = `${currentStepIdx + 1} / 6`;
+                cubeTargetRotX = prev.rotX;
+                cubeTargetRotY = prev.rotY;
+            }
+        });
+
+        // Reset Button
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        async function finalizeCube() {
+            playChime();
+            document.getElementById('step-instruction').innerText = "Validating 54 Stickers...";
+            document.getElementById('mini-grid').style.display = 'none';
 
             const payload = {
                 faces: Object.entries(capturedFaces).map(([face, stickers]) => ({ face, stickers }))
@@ -524,32 +651,22 @@
                     document.getElementById('result-modal').style.display = 'flex';
                     document.getElementById('kociemba-string').innerText = data.kociemba_string;
                 } else {
-                    alert("Cube validation failed: " + (data.detail || "Invalid color distribution"));
+                    alert("Validation Error: " + (data.detail || "Invalid color distribution. Click 'Back' to fix misdetected face."));
+                    currentStepIdx = 5;
+                    document.getElementById('mini-grid').style.display = 'grid';
+                    const last = STEPS[5];
+                    document.getElementById('step-instruction').innerText = `Review ${last.name}`;
+                    document.getElementById('step-badge').innerText = `6 / 6`;
                 }
-            } catch (e) {
-                alert("Error validating cube: " + e.message);
+            } catch (err) {
+                alert("Failed to communicate with validation service: " + err.message);
             }
         }
 
-        // Manual snap button
-        document.getElementById('manual-snap-btn').addEventListener('click', async () => {
-            stabilityProgress = 100;
-            await runAutoScan();
-        });
-
-        // Reset
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            location.reload();
-        });
-
-        // --- 6. Render Loop ---
         function animate() {
             requestAnimationFrame(animate);
-
-            // Smooth interpolation to step target rotation
             cubeGroup.rotation.x += (cubeTargetRotX - cubeGroup.rotation.x) * 0.08;
             cubeGroup.rotation.y += (cubeTargetRotY - cubeGroup.rotation.y) * 0.08;
-
             controls.update();
             renderer.render(scene, camera);
         }
@@ -561,9 +678,9 @@
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
             renderer.setSize(w, h);
-            drawAROverlay();
+            drawARHUD();
         });
-        video.addEventListener('loadedmetadata', () => drawAROverlay());
+        video.addEventListener('loadedmetadata', () => drawARHUD());
     </script>
 </body>
 </html>
