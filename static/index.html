@@ -362,9 +362,15 @@
 
         .inspection-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .inspection-actions .btn {
+            flex: 1 1 auto;
+            min-width: 90px;
         }
 
         #camera-blocked-modal {
@@ -524,11 +530,14 @@
     <!-- Floating 3D Inspection Modal (Fixed in Body for Top-Level Stacking) -->
     <div id="inspection-hud">
         <h2>Cube Scanned Successfully!</h2>
-        <p>All 6 faces validated. Drag the 3D cube below to inspect the solution.</p>
+        <p>All 6 faces validated. Rotate 3D cube below to verify before solving.</p>
         <div id="kociemba-display">Calculating...</div>
         <div class="inspection-actions">
-            <button class="btn btn-confirm" id="copy-btn">Copy Sequence</button>
-            <button class="btn" onclick="location.reload()">Scan Another</button>
+            <button class="btn btn-confirm" id="go-to-solver-btn">
+                🚀 Go to Solver
+            </button>
+            <button class="btn" id="copy-btn">Copy Sequence</button>
+            <button class="btn btn-reset" onclick="location.reload()">Rescan</button>
         </div>
     </div>
 
@@ -938,7 +947,7 @@
 
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
-        // --- Finalize & Validate Cube ---
+       // --- Finalize & Validate Cube ---
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
@@ -988,6 +997,16 @@
                     hud.style.display = 'flex';
                     document.getElementById('kociemba-display').innerText = data.kociemba_string;
 
+                    // 5. Navigate to Go/Wasm solver with encoded state parameter and local storage backup
+                    document.getElementById('go-to-solver-btn').onclick = () => {
+                        const state = data.kociemba_string;
+                        localStorage.setItem('rubiks_scanned_state', state);
+
+                        const solverUrl = `http://localhost:3000/?state=${encodeURIComponent(state)}`;
+                        window.open(solverUrl, '_blank');
+                    };
+
+                    // 6. Copy 54-char Kociemba sequence to clipboard
                     document.getElementById('copy-btn').onclick = () => {
                         navigator.clipboard.writeText(data.kociemba_string);
                         playBeep(880, 0.1);
