@@ -68,13 +68,13 @@
             transition: all 0.4s ease;
         }
 
-        /* Reposition 3D canvas below success modal in inspection mode */
+        /* Reposition 3D canvas snug under the inspection header */
         #cube-pane.inspecting #cube-container {
             position: absolute;
-            top: 180px;
+            top: 130px;
             left: 0;
             width: 100%;
-            height: calc(100% - 180px);
+            height: calc(100% - 130px);
         }
 
         #cube-pane.inspecting .brand-signature {
@@ -420,8 +420,8 @@
             }
 
             #cube-pane.inspecting #cube-container {
-                top: 165px;
-                height: calc(100% - 165px);
+                top: 125px;
+                height: calc(100% - 125px);
             }
 
             /* Morse Code signature: Positioned in the BOTTOM HALF (above the 3D cube) */
@@ -949,7 +949,6 @@
 
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
-       // --- Finalize & Validate Cube ---
         // --- Finalize & Validate Cube ---
         async function finalizeCube() {
             playChime();
@@ -985,15 +984,15 @@
                     cubePane.style.height = '100dvh';
                     cubePane.classList.add('inspecting');
 
-                    // 3. Auto-fit camera framing to fit cube inside remaining vertical bounds
+                    // 3. Shift target down (Y = -0.7) to lift cube upwards towards the top HUD
                     const isMobile = window.innerWidth <= 900;
                     if (isMobile) {
-                        camera.position.set(8.2, 5.8, 8.6);
+                        camera.position.set(8.5, 4.2, 8.5);
                     } else {
-                        camera.position.set(7.2, 5.2, 7.8);
+                        camera.position.set(7.5, 3.8, 7.5);
                     }
-                    camera.lookAt(0, 0, 0);
-                    controls.target.set(0, 0, 0);
+                    controls.target.set(0, -0.7, 0);
+                    camera.lookAt(0, -0.7, 0);
                     controls.update();
 
                     // 4. Resize Three.js renderer to fill adjusted canvas area
