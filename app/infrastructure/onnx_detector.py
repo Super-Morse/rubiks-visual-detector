@@ -64,8 +64,12 @@ class YoloOnnxFaceDetector(IFaceDetector):
         )
 
         if len(boxes) < 9:
-            raise RuntimeError(
-                f"Detection failed: expected at least 9 stickers, but detected {len(boxes)}."
+            return FaceScanResult(
+                stickers=[],
+                details=[],
+                center_color=None,
+                is_valid_face=False,
+                message=f"Searching for cube face: detected {len(boxes)}/9 stickers",
             )
 
         # Select the 9 stickers belonging strictly to the primary face
@@ -89,6 +93,7 @@ class YoloOnnxFaceDetector(IFaceDetector):
             details=sorted_stickers,
             center_color=center_color,
             is_valid_face=True,
+            message="Face detected successfully",
         )
 
     def _cluster_face_stickers(

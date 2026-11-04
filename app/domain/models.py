@@ -45,10 +45,11 @@ class DetectedSticker(BaseModel):
 
 
 class FaceScanResult(BaseModel):
-    stickers: list[Color] = Field(..., min_length=9, max_length=9)
-    details: list[DetectedSticker]
-    center_color: Color
-    is_valid_face: bool = True
+    stickers: list[Color] = Field(default_factory=list)
+    details: list[DetectedSticker] = Field(default_factory=list)
+    center_color: Color | None = None
+    is_valid_face: bool = False
+    message: str = "Face detected successfully"
 
 
 class FaceState(BaseModel):

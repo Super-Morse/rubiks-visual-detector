@@ -62,6 +62,15 @@ class CubeScannerService:
 
             faces_dict[target_pos] = FaceState(face=target_pos, stickers=scan.stickers)
             scan_details[target_pos] = scan
+        
+        for idx, scan in enumerate(detected_scans):
+            if not scan.is_valid_face or scan.center_color is None:
+                raise ValueError(
+                    f"Image #{idx + 1} does not contain a complete 3x3 cube face."
+                )
 
+            center_col = scan.center_color
+            target_pos = DEFAULT_COLOR_TO_FACE.get(center_col)
+            
         cube_state = self.assemble_and_validate(faces_dict)
         return cube_state, scan_details

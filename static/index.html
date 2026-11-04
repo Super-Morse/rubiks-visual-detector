@@ -860,6 +860,13 @@
                 const res = await fetch('/api/v1/scan-face', { method: 'POST', body: formData });
                 if (res.ok) {
                     const data = await res.json();
+
+                    // If less than 9 stickers detected, smoothly draw idle AR HUD without errors
+                    if (!data.is_valid_face) {
+                        drawARHUD('rgba(255, 255, 255, 0.25)');
+                        return;
+                    }
+
                     frameHistory.push(data.stickers);
                     if (frameHistory.length > HISTORY_SIZE) frameHistory.shift();
 
@@ -884,14 +891,11 @@
                     } else {
                         drawARHUD('rgba(255, 170, 0, 0.8)');
                     }
-                } else {
-                    drawARHUD('rgba(255, 255, 255, 0.25)');
                 }
             } catch (err) {
             } finally {
                 isProcessing = false;
             }
-        }
 
         setInterval(scanFrame, 220);
 
