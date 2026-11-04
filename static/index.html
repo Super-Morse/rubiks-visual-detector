@@ -2,66 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rubik's Live AR Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none; 
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             font-style: normal;
             background: #0d0e12;
             color: #f0f0f5;
             height: 100vh;
+            height: 100dvh;
+            width: 100vw;
             display: flex;
             overflow: hidden;
         }
 
-        /* Top-Right Signature Badge: French Blue border (#318ce7), Vibrant orange text */
+        /* Top-Right Signature Badge */
         .brand-signature {
             position: absolute;
             top: 14px;
             right: 18px;
             z-index: 1000;
             color: #ff5800;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             font-weight: 800;
-            font-style: normal;
             letter-spacing: 0.5px;
             background: rgba(18, 18, 24, 0.92);
-            padding: 7px 15px;
+            padding: 6px 14px;
             border-radius: 8px;
             border: 2px solid #318ce7;
             box-shadow: 0 0 14px rgba(49, 140, 231, 0.4);
             pointer-events: none;
         }
 
+        /* DESKTOP LAYOUT (Vertical 50/50 Split) */
         #scanner-pane {
             flex: 1;
             position: relative;
-            height: 100vh;
+            height: 100%;
             overflow: hidden;
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 2px solid rgba(255, 255, 255, 0.12);
             display: flex;
             background: #000;
-            transition: flex 0.4s ease, opacity 0.4s ease;
+            transition: flex 0.4s ease, height 0.4s ease, opacity 0.4s ease;
         }
+
         #scanner-pane.collapsed {
-            flex: 0;
+            flex: 0 !important;
+            height: 0 !important;
             opacity: 0;
             pointer-events: none;
-            border: none;
+            border: none !important;
         }
 
         #cube-pane {
             flex: 1;
             position: relative;
-            height: 100vh;
+            height: 100%;
             overflow: hidden;
-            transition: flex 0.4s ease;
+            background: #0d0e12;
+            transition: flex 0.4s ease, height 0.4s ease;
         }
 
+        /* HUD Header */
         .hud-header {
             position: absolute;
             top: 12px;
@@ -73,12 +87,14 @@
             align-items: center;
             background: rgba(18, 18, 24, 0.92);
             backdrop-filter: blur(12px);
-            padding: 9px 15px;
+            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 14px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
+
         .instruction-title {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 900;
             color: #ffffff;
             transition: color 0.25s ease;
@@ -88,32 +104,35 @@
         .orientation-badge {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
+            gap: 6px;
             background: #D3D3D3;
             border: 1px solid rgba(0, 0, 0, 0.18);
-            padding: 3px 9px;
+            padding: 2px 8px;
             border-radius: 6px;
-            margin-top: 3px;
+            margin-top: 2px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             color: #111116;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 800;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
         }
+
         .arrow-symbol {
             color: #222222;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
         }
+
         .top-color-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 3px;
             display: inline-block;
             border: 1px solid rgba(0, 0, 0, 0.25);
         }
+
         #top-text {
             color: #111116;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 800;
         }
 
@@ -121,12 +140,14 @@
             background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
             border: 1px solid #00ff88;
-            padding: 4px 11px;
+            padding: 4px 10px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 800;
+            white-space: nowrap;
         }
 
+        /* Camera wrapper */
         .video-wrapper {
             position: relative;
             width: 100%;
@@ -135,11 +156,13 @@
             align-items: center;
             justify-content: center;
         }
+
         #webcam {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         #hud-canvas {
             position: absolute;
             top: 0;
@@ -150,26 +173,28 @@
             z-index: 20;
         }
 
-        /* Unified Bottom Floating Container: Prevents Any Overlap */
+        /* Unified Bottom Floating Controls */
         .bottom-panel-container {
             position: absolute;
-            bottom: 12px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 40;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             pointer-events: none;
+            width: 95%;
+            max-width: 480px;
         }
 
         .control-hint {
             background: rgba(18, 18, 24, 0.94);
             border: 1px solid rgba(255, 255, 255, 0.16);
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.74rem;
+            padding: 3px 10px;
+            border-radius: 14px;
+            font-size: 0.7rem;
             color: #ffaa00;
             font-weight: 700;
             letter-spacing: 0.3px;
@@ -181,47 +206,52 @@
         .bottom-control-bar {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            gap: 8px;
             background: rgba(18, 18, 24, 0.95);
             backdrop-filter: blur(14px);
-            padding: 7px 14px;
+            -webkit-backdrop-filter: blur(14px);
+            padding: 6px 12px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             pointer-events: auto;
+            width: auto;
         }
 
         .mini-grid {
             display: grid;
-            grid-template-columns: repeat(3, 20px);
+            grid-template-columns: repeat(3, 19px);
             grid-gap: 3px;
         }
+
         .mini-sticker {
-            width: 20px;
-            height: 20px;
+            width: 19px;
+            height: 19px;
             border-radius: 3px;
             background: #2a2a35;
             border: 1px solid rgba(255, 255, 255, 0.25);
             cursor: pointer;
             transition: transform 0.12s, box-shadow 0.12s;
         }
-        .mini-sticker:hover {
-            transform: scale(1.25);
-            box-shadow: 0 0 6px rgba(255,255,255,0.5);
-            z-index: 10;
+
+        .mini-sticker:active {
+            transform: scale(1.2);
         }
 
         .btn {
             background: rgba(40, 40, 52, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 7px 13px;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
         }
+
         .btn:hover { background: rgba(60, 60, 75, 0.9); }
         .btn:disabled {
             background: rgba(30, 30, 38, 0.6);
@@ -232,87 +262,99 @@
             animation: none;
         }
 
-        .btn-confirm { background: #00ff88; color: #000; border: none; }
+        .btn-confirm { 
+            background: #00ff88; 
+            color: #000; 
+            border: none; 
+        }
+
         .btn-confirm:hover:not(:disabled) {
             background: #00e67a;
-            transform: translateY(-1px);
         }
+
         .btn-confirm.ready-pulse {
             animation: pulse-green 1.2s infinite;
         }
 
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            70% { box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
         }
 
         .cube-hud {
             position: absolute;
-            bottom: 18px;
-            right: 18px;
+            bottom: 14px;
+            right: 14px;
             z-index: 30;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
+
         .btn-reset {
             background: rgba(255, 50, 50, 0.15);
             border: 1px solid rgba(255, 70, 70, 0.4);
             color: #ff5566;
         }
-        .btn-reset:hover {
-            background: rgba(255, 50, 50, 0.3);
-            color: #fff;
-        }
 
-        #cube-container { width: 100%; height: 100%; cursor: grab; }
+        #cube-container { 
+            width: 100%; 
+            height: 100%; 
+            cursor: grab; 
+            touch-action: none;
+        }
         #cube-container:active { cursor: grabbing; }
 
         /* Fullscreen Inspection HUD */
         #inspection-hud {
             position: absolute;
-            top: 24px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(18, 18, 24, 0.92);
+            background: rgba(18, 18, 24, 0.94);
             backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 255, 136, 0.4);
             box-shadow: 0 15px 40px rgba(0,0,0,0.8);
             border-radius: 16px;
-            padding: 18px 26px;
+            padding: 16px 22px;
             z-index: 500;
             display: none;
             flex-direction: column;
             align-items: center;
-            max-width: 650px;
+            max-width: 600px;
             width: 90%;
             text-align: center;
         }
+
         #inspection-hud h2 {
             color: #00ff88;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             margin-bottom: 6px;
         }
+
         #inspection-hud p {
             color: #bbb;
-            font-size: 0.88rem;
-            margin-bottom: 12px;
+            font-size: 0.82rem;
+            margin-bottom: 10px;
         }
+
         #kociemba-display {
             font-family: monospace;
             background: #111216;
             border: 1px solid #333;
             color: #ffaa00;
-            padding: 8px 14px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             margin-bottom: 12px;
             word-break: break-all;
             user-select: text;
         }
+
         .inspection-actions {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         #camera-blocked-modal {
@@ -327,22 +369,136 @@
             text-align: center;
             padding: 2rem;
         }
-        #camera-blocked-modal h2 { color: #ff3344; font-size: 1.8rem; margin-bottom: 1rem; }
-        #camera-blocked-modal p { color: #aaa; max-width: 460px; line-height: 1.5; font-size: 0.95rem; }
+        #camera-blocked-modal h2 { color: #ff3344; font-size: 1.6rem; margin-bottom: 1rem; }
+        #camera-blocked-modal p { color: #aaa; max-width: 440px; line-height: 1.5; font-size: 0.9rem; }
+
+        /* ======================================================== */
+        /* MOBILE VIEWPORT CONFIGURATION (EXACT 50% / 50% SPLIT)    */
+        /* ======================================================== */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                height: 100vh;
+                height: 100dvh;
+                height: -webkit-fill-available;
+            }
+
+            .brand-signature {
+                top: 8px;
+                right: 10px;
+                font-size: 0.72rem;
+                padding: 4px 8px;
+                border-width: 1.5px;
+            }
+
+            /* TOP HALF: Exactly 50% of screen */
+            #scanner-pane {
+                width: 100vw;
+                height: 50vh;
+                height: 50dvh;
+                flex: none;
+                border-right: none;
+                /* Prominent horizontal divider line */
+                border-bottom: 3px solid #318ce7;
+                box-shadow: 0 4px 18px rgba(49, 140, 231, 0.35);
+            }
+
+            /* BOTTOM HALF: Exactly 50% of screen */
+            #cube-pane {
+                width: 100vw;
+                height: 50vh;
+                height: 50dvh;
+                flex: none;
+            }
+
+            /* In inspection mode, expand cube to 100% full screen */
+            #scanner-pane.collapsed + #cube-pane {
+                height: 100vh;
+                height: 100dvh;
+            }
+
+            .hud-header {
+                top: 8px;
+                left: 8px;
+                right: 8px;
+                padding: 5px 10px;
+                border-radius: 8px;
+            }
+
+            .instruction-title {
+                font-size: 0.88rem;
+            }
+
+            .orientation-badge {
+                font-size: 0.68rem;
+                padding: 2px 6px;
+            }
+
+            .step-badge {
+                font-size: 0.72rem;
+                padding: 2px 8px;
+            }
+
+            /* Ultra-compact bottom controls for mobile */
+            .bottom-panel-container {
+                bottom: 6px;
+                gap: 4px;
+            }
+
+            .control-hint {
+                font-size: 0.62rem;
+                padding: 2px 8px;
+            }
+
+            .bottom-control-bar {
+                padding: 4px 8px;
+                gap: 6px;
+                border-radius: 8px;
+            }
+
+            .mini-grid {
+                grid-template-columns: repeat(3, 16px);
+                grid-gap: 2px;
+            }
+
+            .mini-sticker {
+                width: 16px;
+                height: 16px;
+            }
+
+            .btn {
+                padding: 5px 9px;
+                font-size: 0.72rem;
+                border-radius: 5px;
+            }
+
+            .cube-hud {
+                bottom: 8px;
+                right: 8px;
+            }
+
+            #inspection-hud {
+                width: 94%;
+                padding: 12px 14px;
+                top: 12px;
+            }
+            #inspection-hud h2 { font-size: 1.1rem; }
+            #kociemba-display { font-size: 0.78rem; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Signature Badge in the top right viewport -->
+    <!-- Signature Badge in top right -->
     <div class="brand-signature">Morse Code ..- ._ 📟</div>
 
     <!-- Camera Blocked Screen -->
     <div id="camera-blocked-modal">
         <h2>Webcam Access Required</h2>
-        <p>This system operates strictly via real-time computer vision through your webcam. Please connect a camera and grant permission in your browser to proceed.</p>
+        <p>This system operates strictly via real-time computer vision through your camera. Please allow camera permissions in your browser to proceed.</p>
     </div>
 
-    <!-- LEFT: Camera & AR Scanner -->
+    <!-- TOP: Camera & AR Scanner (50vh on Mobile) -->
     <div id="scanner-pane">
         <div class="hud-header">
             <div>
@@ -361,10 +517,9 @@
             <canvas id="hud-canvas"></canvas>
         </div>
 
-        <!-- Unified bottom panel: Hint is strictly placed ABOVE the buttons -->
         <div class="bottom-panel-container" id="bottom-panel-container">
             <div class="control-hint" id="control-hint">
-                💡 Click any sticker to cycle color &bull; Click 'Lock Face' to confirm
+                💡 Click sticker to cycle color &bull; Lock Face to confirm
             </div>
             <div class="bottom-control-bar">
                 <div class="mini-grid" id="mini-grid" title="Click any sticker to cycle color">
@@ -386,7 +541,7 @@
         </div>
     </div>
 
-    <!-- RIGHT: Interactive 3D Rubik's Cube -->
+    <!-- BOTTOM: Interactive 3D Rubik's Cube (50vh on Mobile) -->
     <div id="cube-pane">
         <div id="cube-container"></div>
         <div class="cube-hud">
@@ -396,7 +551,7 @@
         <!-- Floating 3D Inspection HUD -->
         <div id="inspection-hud">
             <h2>Cube Validated & Inspected!</h2>
-            <p>Drag the 3D cube with your mouse to visually inspect all 6 faces before solving.</p>
+            <p>Drag with touch or mouse to inspect all faces before solving.</p>
             <div id="kociemba-display">...</div>
             <div class="inspection-actions">
                 <button class="btn btn-confirm" id="copy-btn">Copy Sequence</button>
@@ -406,9 +561,13 @@
     </div>
 
     <script>
+        // Web Audio Synthesizer
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq = 600, duration = 0.08) {
             try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
@@ -467,7 +626,7 @@
         const HISTORY_SIZE = 5;
         let currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
 
-        // Three.js Scene Setup
+        // --- Three.js Scene Setup ---
         const container = document.getElementById('cube-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#0d0e12');
@@ -475,13 +634,14 @@
         const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
         camera.position.set(5.5, 4.0, 6.0);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.85));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -525,7 +685,6 @@
                         mesh.position.set(u, dir.y * offset, -dir.y * v);
                         mesh.rotation.x = dir.y > 0 ? -Math.PI / 2 : Math.PI / 2;
                     } else {
-                        // Invert horizontal axis for Back face (dir.z < 0) to resolve mirroring
                         mesh.position.set(dir.z > 0 ? u : -u, v, dir.z * offset);
                         mesh.rotation.y = dir.z > 0 ? 0 : Math.PI;
                     }
@@ -555,7 +714,11 @@
         async function initCameraStrict() {
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
+                    video: { 
+                        width: { ideal: 1280 }, 
+                        height: { ideal: 720 }, 
+                        facingMode: "environment" 
+                    }
                 });
                 video.srcObject = videoStream;
             } catch (err) {
@@ -564,40 +727,44 @@
         }
         initCameraStrict();
 
-        // Dynamically scaled AR HUD: Never overlaps with top header or bottom controls
+        // Responsive AR HUD: dynamically scales for both mobile 50vh and desktop
         function drawARHUD(statusColor = 'rgba(0, 255, 136, 0.8)') {
             if (isScanCompleted) return;
-            hudCanvas.width = video.clientWidth;
-            hudCanvas.height = video.clientHeight;
+            const w = video.clientWidth;
+            const h = video.clientHeight;
 
-            const w = hudCanvas.width;
-            const h = hudCanvas.height;
+            hudCanvas.width = w;
+            hudCanvas.height = h;
 
-            // Header height ~68px; Bottom panel height ~95px; Safe zone = between Y=78 and Y=(h - 105)
-            const topMargin = 80;
-            const bottomMargin = 105;
-            const safeZoneHeight = Math.max(140, h - topMargin - bottomMargin);
+            const isMobile = window.innerWidth <= 900;
+            const topMargin = isMobile ? 48 : 72;
+            const bottomMargin = isMobile ? 68 : 95;
+            const safeZoneHeight = Math.max(100, h - topMargin - bottomMargin);
 
-            // Compute ideal square size ensuring plenty of breathing room
-            const size = Math.floor(Math.min(w * 0.65, safeZoneHeight * 0.88, 270));
+            // Compute ideal square fitting safe zone
+            const maxAllowed = isMobile ? 210 : 270;
+            const size = Math.floor(Math.min(w * 0.72, safeZoneHeight * 0.92, maxAllowed));
             const startX = Math.floor((w - size) / 2);
             const startY = Math.floor(topMargin + (safeZoneHeight - size) / 2);
             const step = size / 3;
 
             hudCtx.clearRect(0, 0, w, h);
 
-            hudCtx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+            // Semi-transparent overlay surrounding the target box
+            hudCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             hudCtx.fillRect(0, 0, w, startY);
             hudCtx.fillRect(0, startY + size, w, h - (startY + size));
             hudCtx.fillRect(0, startY, startX, size);
             hudCtx.fillRect(startX + size, startY, w - (startX + size), size);
 
+            // 3x3 Outer border
             hudCtx.lineWidth = 3;
             hudCtx.strokeStyle = statusColor;
             hudCtx.strokeRect(startX, startY, size, size);
 
+            // Grid lines
             hudCtx.lineWidth = 1;
-            hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             for (let i = 1; i < 3; i++) {
                 hudCtx.beginPath();
                 hudCtx.moveTo(startX + i * step, startY);
@@ -610,19 +777,20 @@
                 hudCtx.stroke();
             }
 
-            // Top direction indicator dynamically colored to active top face
+            // Top direction guide
             if (currentStepIdx < STEPS.length) {
                 const stepData = STEPS[currentStepIdx];
                 hudCtx.fillStyle = stepData.topHex;
-                hudCtx.font = "bold 13px -apple-system, sans-serif";
+                hudCtx.font = `bold ${isMobile ? 11 : 13}px -apple-system, sans-serif`;
                 hudCtx.textAlign = "center";
-                hudCtx.fillText(`${stepData.topName} ▲`, w / 2, startY - 10);
+                hudCtx.fillText(`${stepData.topName} ▲`, w / 2, Math.max(16, startY - 8));
             }
         }
 
         const miniStickerEls = document.querySelectorAll('.mini-sticker');
         miniStickerEls.forEach((el) => {
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const idx = parseInt(el.getAttribute('data-idx'), 10);
                 const current = currentStickers[idx];
                 const nextIdx = (COLOR_ORDER.indexOf(current) + 1) % COLOR_ORDER.length;
@@ -708,7 +876,7 @@
                         playBeep(660, 0.15);
 
                         const titleEl = document.getElementById('step-instruction');
-                        titleEl.innerText = `Verify Colors & Lock Face`;
+                        titleEl.innerText = `Verify & Lock Face`;
                         titleEl.style.color = '#ffaa00';
 
                         confirmBtn.disabled = false;
@@ -829,12 +997,8 @@
                 if (res.ok && data.is_valid) {
                     document.getElementById('scanner-pane').classList.add('collapsed');
                     setTimeout(() => {
-                        const w = container.clientWidth;
-                        const h = container.clientHeight;
-                        camera.aspect = w / h;
-                        camera.updateProjectionMatrix();
-                        renderer.setSize(w, h);
-                    }, 420);
+                        handleResize();
+                    }, 450);
 
                     document.getElementById('inspection-hud').style.display = 'flex';
                     document.getElementById('kociemba-display').innerText = data.kociemba_string;
@@ -866,13 +1030,18 @@
         }
         animate();
 
-        window.addEventListener('resize', () => {
+        function handleResize() {
             const w = container.clientWidth;
             const h = container.clientHeight;
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
             renderer.setSize(w, h);
             drawARHUD();
+        }
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 200);
         });
         video.addEventListener('loadedmetadata', () => drawARHUD());
     </script>
