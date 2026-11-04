@@ -71,10 +71,10 @@
         /* Reposition 3D canvas below success modal in inspection mode */
         #cube-pane.inspecting #cube-container {
             position: absolute;
-            top: 195px;
+            top: 180px;
             left: 0;
             width: 100%;
-            height: calc(100% - 195px);
+            height: calc(100% - 180px);
         }
 
         #cube-pane.inspecting .brand-signature {
@@ -420,8 +420,8 @@
             }
 
             #cube-pane.inspecting #cube-container {
-                top: 175px;
-                height: calc(100% - 175px);
+                top: 165px;
+                height: calc(100% - 165px);
             }
 
             /* Morse Code signature: Positioned in the BOTTOM HALF (above the 3D cube) */
@@ -622,6 +622,8 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.08;
+        controls.minDistance = 4.5;
+        controls.maxDistance = 14.0;
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.85));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -948,6 +950,7 @@
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
        // --- Finalize & Validate Cube ---
+        // --- Finalize & Validate Cube ---
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
@@ -972,32 +975,38 @@
                 const data = await res.json();
 
                 if (res.ok && data.is_valid) {
-                    // 1. Hide the camera pane completely on both mobile and desktop
+                    // 1. Hide the camera pane completely across all viewport sizes
                     const scannerPane = document.getElementById('scanner-pane');
                     scannerPane.style.display = 'none';
 
-                    // 2. Expand cube pane and apply inspecting class to shift canvas down
+                    // 2. Expand cube pane and apply inspecting layout shift
                     const cubePane = document.getElementById('cube-pane');
                     cubePane.style.height = '100vh';
                     cubePane.style.height = '100dvh';
                     cubePane.classList.add('inspecting');
 
-                    // Adjust camera distance slightly for comfortable mobile framing
-                    if (window.innerWidth <= 900) {
-                        camera.position.set(6.2, 4.2, 6.6);
+                    // 3. Auto-fit camera framing to fit cube inside remaining vertical bounds
+                    const isMobile = window.innerWidth <= 900;
+                    if (isMobile) {
+                        camera.position.set(8.2, 5.8, 8.6);
+                    } else {
+                        camera.position.set(7.2, 5.2, 7.8);
                     }
+                    camera.lookAt(0, 0, 0);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
 
-                    // 3. Resize Three.js viewport to fill the new dedicated lower area
+                    // 4. Resize Three.js renderer to fill adjusted canvas area
                     setTimeout(() => {
                         handleResize();
                     }, 50);
 
-                    // 4. Show the top-level inspection modal
+                    // 5. Reveal inspection modal with validated sequence
                     const hud = document.getElementById('inspection-hud');
                     hud.style.display = 'flex';
                     document.getElementById('kociemba-display').innerText = data.kociemba_string;
 
-                    // 5. Navigate to Go/Wasm solver with encoded state parameter and local storage backup
+                    // 6. Navigate to Go/Wasm solver passing state via query parameter and storage
                     document.getElementById('go-to-solver-btn').onclick = () => {
                         const state = data.kociemba_string;
                         localStorage.setItem('rubiks_scanned_state', state);
@@ -1006,7 +1015,7 @@
                         window.open(solverUrl, '_blank');
                     };
 
-                    // 6. Copy 54-char Kociemba sequence to clipboard
+                    // 7. Copy 54-char Kociemba sequence to clipboard
                     document.getElementById('copy-btn').onclick = () => {
                         navigator.clipboard.writeText(data.kociemba_string);
                         playBeep(880, 0.1);
