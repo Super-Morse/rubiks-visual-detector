@@ -571,14 +571,23 @@
             setTimeout(() => playBeep(783.99, 0.25), 200);
         }
 
-        // --- 2. Go WebAssembly Initialization ---
+        // --- 2. Robust Go WebAssembly Initialization (MIME-type agnostic) ---
+        let wasmReady = false;
         const go = new Go();
-        WebAssembly.instantiateStreaming(fetch("solver.wasm"), go.importObject).then((result) => {
-            go.run(result.instance);
-            console.log("✅ Go WASM Solver Engine ready!");
-        }).catch(err => {
-            console.warn("WASM engine loading deferred:", err);
-        });
+
+        async function loadWasmSolver() {
+            try {
+                const response = await fetch("solver.wasm");
+                const buffer = await response.arrayBuffer();
+                const result = await WebAssembly.instantiate(buffer, go.importObject);
+                go.run(result.instance);
+                wasmReady = true;
+                console.log("✅ Go WASM Kociemba Solver successfully initialized!");
+            } catch (err) {
+                console.error("❌ Failed to initialize WASM solver:", err);
+            }
+        }
+        loadWasmSolver();
 
         // --- 3. Color Mapping & Steps ---
         const COLOR_ORDER = ['white', 'yellow', 'green', 'blue', 'red', 'orange'];
@@ -1065,6 +1074,9 @@
         // --- 7. Finalize, Solve with Go WASM & Animate ---
         let rawSolutionMoves = "";
 
+        // --- 7. Finalize, Solve with Go WASM & Animate ---
+        let standardSolutionStr = "";
+
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
@@ -1089,17 +1101,16 @@
                 const data = await res.json();
 
                 if (res.ok && data.is_valid) {
-                    // 1. Hide the camera pane completely across all viewport sizes
-                    const scannerPane = document.getElementById('scanner-pane');
-                    scannerPane.style.display = 'none';
+                    // 1. Hide the camera pane
+                    document.getElementById('scanner-pane').style.display = 'none';
 
-                    // 2. Expand cube pane and apply inspecting layout shift
+                    // 2. Expand cube pane
                     const cubePane = document.getElementById('cube-pane');
                     cubePane.style.height = '100vh';
                     cubePane.style.height = '100dvh';
                     cubePane.classList.add('inspecting');
 
-                    // 3. Shift target down (Y = -0.7) to lift cube upwards towards the top HUD
+                    // 3. Elevate 3D cube positioning
                     const isMobile = window.innerWidth <= 900;
                     if (isMobile) {
                         camera.position.set(8.5, 4.2, 8.5);
@@ -1110,33 +1121,35 @@
                     camera.lookAt(0, -0.7, 0);
                     controls.update();
 
-                    setTimeout(() => {
-                        handleResize();
-                    }, 50);
+                    setTimeout(() => handleResize(), 50);
 
-                    // 4. Calculate Solution via Go WASM directly in browser
-                    const t0 = performance.now();
-                    let solutionStr = "";
-                    if (typeof window.kociembaSolve === "function") {
-                        solutionStr = window.kociembaSolve(data.kociemba_string);
-                    }
-                    const t1 = performance.now();
-
+                    // 4. Calculate Solution via Go WASM
                     const hud = document.getElementById('inspection-hud');
                     hud.style.display = 'flex';
 
-                    if (solutionStr && !solutionStr.startsWith("Error")) {
-                        rawSolutionMoves = solutionStr.trim();
-                        solutionMoves = rawSolutionMoves.split(/\s+/);
-                        document.getElementById('kociemba-display').innerHTML = 
-                            `<strong>Solution (${solutionMoves.length} moves):</strong><br>${rawSolutionMoves}<br><span style="color:#aaa; font-size:0.75rem;">Calculated in ${(t1 - t0).toFixed(2)} ms</span>`;
+                    let result = "";
+                    if (typeof window.kociembaSolve === "function") {
+                        result = window.kociembaSolve(data.kociemba_string);
                     } else {
-                        rawSolutionMoves = data.kociemba_string;
-                        document.getElementById('kociemba-display').innerText = data.kociemba_string;
+                        result = "Error: WASM solver engine not loaded yet";
+                    }
+
+                    if (result && !result.startsWith("Error")) {
+                        // Standard clean move format: "D U' D2 B2 R U D' B' U2 D' F B U2 F2 R F2 B' U2 F2 D'"
+                        standardSolutionStr = result.trim();
+                        solutionMoves = standardSolutionStr.split(/\s+/);
+
+                        document.getElementById('kociemba-display').innerText = standardSolutionStr;
+                    } else {
+                        document.getElementById('kociemba-display').innerText = result || data.kociemba_string;
+                        alert("Solver output: " + result);
                     }
 
                     // 5. Play Solution Animation on the 3D Cube
                     const solveBtn = document.getElementById('go-to-solver-btn');
+                    solveBtn.innerText = "▶ Solve Cube";
+                    solveBtn.disabled = false;
+
                     solveBtn.onclick = () => {
                         if (!solutionMoves.length || isAutoSolving) return;
 
@@ -1156,15 +1169,15 @@
                             const move = solutionMoves[moveIdx];
                             moveIdx++;
                             applyMove3D(move, () => {
-                                setTimeout(playNext, 80);
+                                setTimeout(playNext, 90);
                             });
                         }
                         playNext();
                     };
 
-                    // 6. Copy Sequence
+                    // 6. Copy standard solution moves
                     document.getElementById('copy-btn').onclick = () => {
-                        navigator.clipboard.writeText(rawSolutionMoves);
+                        navigator.clipboard.writeText(standardSolutionStr);
                         playBeep(880, 0.1);
                         document.getElementById('copy-btn').innerText = "Copied! ✓";
                         setTimeout(() => {
