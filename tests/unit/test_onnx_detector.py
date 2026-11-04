@@ -57,15 +57,18 @@ def test_detect_corrupted_bytes_raises_value_error():
         detector.detect(b"this is not a valid jpeg or png")
 
 
-def test_real_model_on_empty_image_raises_runtime_error(black_image_bytes):
-    """Real inference: running model on a black image detects 0 stickers -> raises RuntimeError."""
+def test_real_model_on_empty_image_returns_invalid_face(black_image_bytes):
+    """Verifies that an image without cube stickers gracefully returns is_valid_face=False."""
     if not Path(REAL_MODEL_PATH).is_file():
         pytest.skip("best.onnx model file not found.")
 
     detector = YoloOnnxFaceDetector(model_path=REAL_MODEL_PATH)
+    result = detector.detect(black_image_bytes)
 
-    with pytest.raises(RuntimeError, match="expected at least 9 stickers, but detected 0"):
-        detector.detect(black_image_bytes)
+    assert result.is_valid_face is False
+    assert len(result.stickers) == 0
+    assert result.center_color is None
+    assert "Searching for cube face" in result.message
 
 
 def test_detect_full_pipeline_and_grid_sorting(monkeypatch, black_image_bytes):

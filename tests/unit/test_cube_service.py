@@ -1,4 +1,3 @@
-from unittest.mock import MagicMock
 import pytest
 
 from app.domain.exceptions import DuplicateCenterColorError
@@ -55,17 +54,19 @@ def make_solved_cube_dict() -> dict[FacePosition, FaceState]:
 
 
 def test_service_process_face_image():
-    """Covers line 21: process_face_image delegation."""
+    """Tests that process_face_image delegates frame processing to the underlying detector."""
     detector = StubDetector([Color.WHITE])
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
-    
+
     result = service.process_face_image(b"fake_image_bytes")
-    
+
+    assert result.is_valid_face is True
     assert result.center_color == Color.WHITE
     assert len(result.stickers) == 9
 
 
 def test_service_assemble_and_validate_success():
+    """Tests that 6 valid faces are properly assembled and validated into a CubeState."""
     service = CubeScannerService(
         detector=StubDetector([]),
         validator=StandardCubeValidator(),
@@ -85,6 +86,7 @@ def test_service_assemble_and_validate_success():
 
 
 def test_service_process_six_images_success():
+    """Tests that 6 valid images are correctly processed and assigned to their respective faces."""
     colors = [Color.WHITE, Color.RED, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.BLUE]
     detector = StubDetector(colors)
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
@@ -97,7 +99,16 @@ def test_service_process_six_images_success():
     assert cube.faces[FacePosition.R].center_color == Color.RED
 
 
+def test_service_process_six_images_count_mismatch():
+    """Tests that passing any number of images other than exactly 6 raises ValueError."""
+    service = CubeScannerService(detector=StubDetector([]), validator=StandardCubeValidator())
+
+    with pytest.raises(ValueError, match="Expected exactly 6 images"):
+        service.process_six_images([b"fake"] * 5)
+
+
 def test_service_process_six_images_rejects_duplicate_center():
+    """Tests that passing duplicate center faces raises DuplicateCenterColorError."""
     colors = [Color.WHITE, Color.WHITE, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.BLUE]
     detector = StubDetector(colors)
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
@@ -106,22 +117,36 @@ def test_service_process_six_images_rejects_duplicate_center():
         service.process_six_images([b"fake"] * 6)
 
 
-def test_service_process_six_images_count_mismatch():
-    service = CubeScannerService(detector=StubDetector([]), validator=StandardCubeValidator())
+def test_service_process_six_images_incomplete_face_raises_value_error(monkeypatch):
+    """Tests that an incomplete face detection raises ValueError using monkeypatch."""
+    detector = StubDetector([])
+    incomplete_scan = FaceScanResult(
+        stickers=[],
+        details=[],
+        center_color=None,
+        is_valid_face=False,
+    )
+    monkeypatch.setattr(detector, "detect", lambda image_bytes: incomplete_scan)
 
-    with pytest.raises(ValueError, match="Expected exactly 6 images"):
-        service.process_six_images([b"fake"] * 5)
+    service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
+
+    with pytest.raises(ValueError, match="does not contain a complete 3x3 cube face"):
+        service.process_six_images([b"fake"] * 6)
 
 
-def test_service_process_six_images_unmapped_center_color():
-    """Covers line 56: unmapped center color raises ValueError."""
-    mock_scan = MagicMock(spec=FaceScanResult)
-    mock_scan.center_color = "unsupported_color"  # Not present in DEFAULT_COLOR_TO_FACE
+def test_service_process_six_images_unmapped_center_color(monkeypatch):
+    """Tests that an unsupported center color raises ValueError using monkeypatch."""
+    detector = StubDetector([])
+    fake_scan = FaceScanResult(
+        stickers=[Color.WHITE] * 9,
+        details=[],
+        center_color=Color.WHITE,
+        is_valid_face=True,
+    )
+    monkeypatch.setattr(fake_scan, "center_color", "unsupported_color")
+    monkeypatch.setattr(detector, "detect", lambda image_bytes: fake_scan)
 
-    mock_detector = MagicMock(spec=IFaceDetector)
-    mock_detector.detect.return_value = mock_scan
-
-    service = CubeScannerService(detector=mock_detector, validator=StandardCubeValidator())
+    service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
 
     with pytest.raises(ValueError, match="Unknown center color detected: unsupported_color"):
         service.process_six_images([b"fake"] * 6)

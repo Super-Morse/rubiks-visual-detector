@@ -34,7 +34,7 @@ class CubeScannerService:
         """Processes 6 images, auto-assigns faces by center color, and validates the cube.
 
         Raises:
-            ValueError: If exactly 6 images are not provided.
+            ValueError: If exactly 6 images are not provided or any face scan is incomplete.
             DuplicateCenterColorError: If multiple faces have the same center sticker color.
             CubeDomainException: If assembled cube state fails validation.
         """
@@ -48,7 +48,10 @@ class CubeScannerService:
         faces_dict: dict[FacePosition, FaceState] = {}
         scan_details: dict[FacePosition, FaceScanResult] = {}
 
-        for scan in detected_scans:
+        for idx, scan in enumerate(detected_scans):
+            if not scan.is_valid_face or scan.center_color is None:
+                raise ValueError(f"Image #{idx + 1} does not contain a complete 3x3 cube face.")
+
             center_col = scan.center_color
             target_pos = DEFAULT_COLOR_TO_FACE.get(center_col)
 
@@ -62,15 +65,6 @@ class CubeScannerService:
 
             faces_dict[target_pos] = FaceState(face=target_pos, stickers=scan.stickers)
             scan_details[target_pos] = scan
-        
-        for idx, scan in enumerate(detected_scans):
-            if not scan.is_valid_face or scan.center_color is None:
-                raise ValueError(
-                    f"Image #{idx + 1} does not contain a complete 3x3 cube face."
-                )
 
-            center_col = scan.center_color
-            target_pos = DEFAULT_COLOR_TO_FACE.get(center_col)
-            
         cube_state = self.assemble_and_validate(faces_dict)
         return cube_state, scan_details
