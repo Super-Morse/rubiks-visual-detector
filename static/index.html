@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rubik's Live AR Scanner</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+    <script src="wasm_exec.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
@@ -353,11 +354,14 @@
             color: #ffaa00;
             padding: 8px 12px;
             border-radius: 8px;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             margin-bottom: 10px;
-            word-break: break-all;
+            word-break: break-word;
             user-select: text;
             width: 100%;
+            line-height: 1.4;
+            max-height: 80px;
+            overflow-y: auto;
         }
 
         .inspection-actions {
@@ -460,7 +464,7 @@
                 top: 10px;
             }
             #inspection-hud h2 { font-size: 1.05rem; }
-            #kociemba-display { font-size: 0.74rem; padding: 7px; margin-bottom: 8px; }
+            #kociemba-display { font-size: 0.78rem; padding: 7px; margin-bottom: 8px; }
         }
     </style>
 </head>
@@ -527,21 +531,22 @@
         </div>
     </div>
 
-    <!-- Floating 3D Inspection Modal (Fixed in Body for Top-Level Stacking) -->
+    <!-- Floating 3D Inspection & Solve Modal -->
     <div id="inspection-hud">
         <h2>Cube Scanned Successfully!</h2>
-        <p>All 6 faces validated. Rotate 3D cube below to verify before solving.</p>
-        <div id="kociemba-display">Calculating...</div>
+        <p>Optimal solution calculated via Go Wasm. Watch it solve or rotate to inspect.</p>
+        <div id="kociemba-display">Calculating solution...</div>
         <div class="inspection-actions">
             <button class="btn btn-confirm" id="go-to-solver-btn">
-                🚀 Go to Solver
+                ▶ Solve Cube
             </button>
-            <button class="btn" id="copy-btn">Copy Sequence</button>
+            <button class="btn" id="copy-btn">Copy Solution</button>
             <button class="btn btn-reset" onclick="location.reload()">Rescan</button>
         </div>
     </div>
 
     <script>
+        // --- 1. Audio Synthesizer (Web Audio API) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq = 600, duration = 0.08) {
             try {
@@ -566,6 +571,16 @@
             setTimeout(() => playBeep(783.99, 0.25), 200);
         }
 
+        // --- 2. Go WebAssembly Initialization ---
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("solver.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+            console.log("✅ Go WASM Solver Engine ready!");
+        }).catch(err => {
+            console.warn("WASM engine loading deferred:", err);
+        });
+
+        // --- 3. Color Mapping & Steps ---
         const COLOR_ORDER = ['white', 'yellow', 'green', 'blue', 'red', 'orange'];
         const COLOR_HEX = {
             white: 0xffffff,
@@ -574,7 +589,8 @@
             blue: 0x0046ad,
             red: 0xb71234,
             orange: 0xff5800,
-            gray: 0x24242d
+            gray: 0x24242d,
+            Core: 0x111116
         };
 
         const FACE_TITLE_COLORS = {
@@ -606,7 +622,7 @@
         const HISTORY_SIZE = 5;
         let currentStickers = ['gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray'];
 
-        // --- Three.js Scene Setup ---
+        // --- 4. Three.js 26-Cubie Interactive Scene ---
         const container = document.getElementById('cube-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#0d0e12');
@@ -630,64 +646,161 @@
         dirLight.position.set(10, 15, 10);
         scene.add(dirLight);
 
-        const cubeGroup = new THREE.Group();
-        scene.add(cubeGroup);
+        const cubies = [];
+        const geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
 
-        const coreGeo = new THREE.BoxGeometry(2.94, 2.94, 2.94);
-        const coreMat = new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.9 });
-        cubeGroup.add(new THREE.Mesh(coreGeo, coreMat));
-
-        const faceStickers = { U: [], R: [], F: [], D: [], L: [], B: [] };
-        const stickerGeo = new THREE.PlaneGeometry(0.88, 0.88);
-
-        const faceConfigs = [
-            { face: 'U', dir: new THREE.Vector3(0, 1, 0) },
-            { face: 'D', dir: new THREE.Vector3(0, -1, 0) },
-            { face: 'F', dir: new THREE.Vector3(0, 0, 1) },
-            { face: 'B', dir: new THREE.Vector3(0, 0, -1) },
-            { face: 'R', dir: new THREE.Vector3(1, 0, 0) },
-            { face: 'L', dir: new THREE.Vector3(-1, 0, 0) }
-        ];
-
-        faceConfigs.forEach(({ face, dir }) => {
-            for (let v = 1; v >= -1; v--) {
-                for (let u = -1; u <= 1; u++) {
-                    const mat = new THREE.MeshStandardMaterial({
-                        color: COLOR_HEX.gray,
-                        roughness: 0.35,
-                        side: THREE.DoubleSide
-                    });
-                    const mesh = new THREE.Mesh(stickerGeo, mat);
-                    const offset = 1.48;
-
-                    if (Math.abs(dir.x) > 0) {
-                        mesh.position.set(dir.x * offset, v, -dir.x * u);
-                        mesh.rotation.y = dir.x > 0 ? Math.PI / 2 : -Math.PI / 2;
-                    } else if (Math.abs(dir.y) > 0) {
-                        mesh.position.set(u, dir.y * offset, -dir.y * v);
-                        mesh.rotation.x = dir.y > 0 ? -Math.PI / 2 : Math.PI / 2;
-                    } else {
-                        mesh.position.set(dir.z > 0 ? u : -u, v, dir.z * offset);
-                        mesh.rotation.y = dir.z > 0 ? 0 : Math.PI;
-                    }
-
-                    cubeGroup.add(mesh);
-                    faceStickers[face].push(mesh);
+        // BoxGeometry face materials order:
+        // mat[0]: +X (R), mat[1]: -X (L), mat[2]: +Y (U), mat[3]: -Y (D), mat[4]: +Z (F), mat[5]: -Z (B)
+        for (let x = -1; x <= 1; x++) {
+            for (let y = -1; y <= 1; y++) {
+                for (let z = -1; z <= 1; z++) {
+                    const materials = [
+                        new THREE.MeshStandardMaterial({ color: x === 1 ? COLOR_HEX.gray : COLOR_HEX.Core }),
+                        new THREE.MeshStandardMaterial({ color: x === -1 ? COLOR_HEX.gray : COLOR_HEX.Core }),
+                        new THREE.MeshStandardMaterial({ color: y === 1 ? COLOR_HEX.gray : COLOR_HEX.Core }),
+                        new THREE.MeshStandardMaterial({ color: y === -1 ? COLOR_HEX.gray : COLOR_HEX.Core }),
+                        new THREE.MeshStandardMaterial({ color: z === 1 ? COLOR_HEX.gray : COLOR_HEX.Core }),
+                        new THREE.MeshStandardMaterial({ color: z === -1 ? COLOR_HEX.gray : COLOR_HEX.Core })
+                    ];
+                    const cubie = new THREE.Mesh(geometry, materials);
+                    cubie.position.set(x, y, z);
+                    scene.add(cubie);
+                    cubies.push(cubie);
                 }
             }
-        });
+        }
+
+        const cubeGroup = new THREE.Group();
+        cubies.forEach(c => cubeGroup.add(c));
+        scene.add(cubeGroup);
+
+        // Kociemba 54-facelet mapping to cubie position (x, y, z) and material face index
+        const faceletToCubieMap = [
+            // U (0..8, mat 2: +Y)
+            {x:-1, y:1, z:-1, mat:2}, {x:0, y:1, z:-1, mat:2}, {x:1, y:1, z:-1, mat:2},
+            {x:-1, y:1, z:0,  mat:2}, {x:0, y:1, z:0,  mat:2}, {x:1, y:1, z:0,  mat:2},
+            {x:-1, y:1, z:1,  mat:2}, {x:0, y:1, z:1,  mat:2}, {x:1, y:1, z:1,  mat:2},
+
+            // R (9..17, mat 0: +X)
+            {x:1, y:1, z:1,   mat:0}, {x:1, y:1, z:0,   mat:0}, {x:1, y:1, z:-1,  mat:0},
+            {x:1, y:0, z:1,   mat:0}, {x:1, y:0, z:0,   mat:0}, {x:1, y:0, z:-1,  mat:0},
+            {x:1, y:-1, z:1,  mat:0}, {x:1, y:-1, z:0,  mat:0}, {x:1, y:-1, z:-1, mat:0},
+
+            // F (18..26, mat 4: +Z)
+            {x:-1, y:1, z:1,  mat:4}, {x:0, y:1, z:1,  mat:4}, {x:1, y:1, z:1,  mat:4},
+            {x:-1, y:0, z:1,  mat:4}, {x:0, y:0, z:1,  mat:4}, {x:1, y:0, z:1,  mat:4},
+            {x:-1, y:-1, z:1, mat:4}, {x:0, y:-1, z:1, mat:4}, {x:1, y:-1, z:1, mat:4},
+
+            // D (27..35, mat 3: -Y)
+            {x:-1, y:-1, z:1,  mat:3}, {x:0, y:-1, z:1,  mat:3}, {x:1, y:-1, z:1,  mat:3},
+            {x:-1, y:-1, z:0,  mat:3}, {x:0, y:-1, z:0,  mat:3}, {x:1, y:-1, z:0,  mat:3},
+            {x:-1, y:-1, z:-1, mat:3}, {x:0, y:-1, z:-1, mat:3}, {x:1, y:-1, z:-1, mat:3},
+
+            // L (36..44, mat 1: -X)
+            {x:-1, y:1, z:-1,  mat:1}, {x:-1, y:1, z:0,  mat:1}, {x:-1, y:1, z:1,  mat:1},
+            {x:-1, y:0, z:-1,  mat:1}, {x:-1, y:0, z:0,  mat:1}, {x:-1, y:0, z:1,  mat:1},
+            {x:-1, y:-1, z:-1, mat:1}, {x:-1, y:-1, z:0, mat:1}, {x:-1, y:-1, z:1, mat:1},
+
+            // B (45..53, mat 5: -Z)
+            {x:1, y:1, z:-1,  mat:5}, {x:0, y:1, z:-1,  mat:5}, {x:-1, y:1, z:-1,  mat:5},
+            {x:1, y:0, z:-1,  mat:5}, {x:0, y:0, z:-1,  mat:5}, {x:-1, y:0, z:-1,  mat:5},
+            {x:1, y:-1, z:-1, mat:5}, {x:0, y:-1, z:-1, mat:5}, {x:-1, y:-1, z:-1, mat:5}
+        ];
+
+        const faceIndexRanges = {
+            U: [0, 9], R: [9, 18], F: [18, 27], D: [27, 36], L: [36, 45], B: [45, 54]
+        };
 
         function update3DFaceColors(facePos, colors) {
-            colors.forEach((colName, idx) => {
-                if (faceStickers[facePos][idx]) {
-                    faceStickers[facePos][idx].material.color.setHex(COLOR_HEX[colName] || COLOR_HEX.gray);
+            const [start, end] = faceIndexRanges[facePos];
+            colors.forEach((colName, i) => {
+                const target = faceletToCubieMap[start + i];
+                const cubie = cubies.find(c => 
+                    Math.round(c.position.x) === target.x &&
+                    Math.round(c.position.y) === target.y &&
+                    Math.round(c.position.z) === target.z
+                );
+                if (cubie && cubie.material[target.mat]) {
+                    cubie.material[target.mat].color.setHex(COLOR_HEX[colName] || COLOR_HEX.gray);
                 }
             });
         }
 
         let cubeTargetRotX = Math.PI / 2, cubeTargetRotY = 0;
 
-        // Camera Initialization
+        // --- 5. 3D Layer Rotation Engine ---
+        let solutionMoves = [];
+        let isAnimatingMove = false;
+        let isAutoSolving = false;
+        const animationSpeed = 0.16;
+
+        const faceDefinitions = {
+            'R': { axis: 'x', sign: 1, angle: -Math.PI / 2 },
+            'L': { axis: 'x', sign: -1, angle: Math.PI / 2 },
+            'U': { axis: 'y', sign: 1, angle: -Math.PI / 2 },
+            'D': { axis: 'y', sign: -1, angle: Math.PI / 2 },
+            'F': { axis: 'z', sign: 1, angle: -Math.PI / 2 },
+            'B': { axis: 'z', sign: -1, angle: Math.PI / 2 }
+        };
+
+        function applyMove3D(moveStr, onComplete) {
+            if (isAnimatingMove) return;
+            isAnimatingMove = true;
+
+            const baseMove = moveStr[0];
+            const modifier = moveStr[1] || '';
+
+            const def = faceDefinitions[baseMove];
+            let targetAngle = def.angle;
+            if (modifier === "'") targetAngle *= -1;
+            if (modifier === "2") targetAngle *= 2;
+
+            const activeCubies = [];
+            cubies.forEach(cubie => {
+                const pos = Math.round(cubie.getWorldPosition(new THREE.Vector3())[def.axis]);
+                if (pos === def.sign) activeCubies.push(cubie);
+            });
+
+            const pivot = new THREE.Object3D();
+            pivot.rotation.set(0, 0, 0);
+            pivot.updateMatrixWorld();
+            scene.add(pivot);
+
+            activeCubies.forEach(cubie => pivot.attach(cubie));
+
+            let currentAngle = 0;
+            const step = (targetAngle > 0 ? animationSpeed : -animationSpeed);
+
+            function animateRotation() {
+                if (Math.abs(currentAngle) < Math.abs(targetAngle)) {
+                    currentAngle += step;
+                    if (Math.abs(currentAngle) > Math.abs(targetAngle)) currentAngle = targetAngle;
+                    pivot.rotation[def.axis] = currentAngle;
+                    requestAnimationFrame(animateRotation);
+                } else {
+                    pivot.rotation[def.axis] = targetAngle;
+                    pivot.updateMatrixWorld();
+
+                    activeCubies.forEach(cubie => {
+                        cubeGroup.attach(cubie);
+                        cubie.position.x = Math.round(cubie.position.x);
+                        cubie.position.y = Math.round(cubie.position.y);
+                        cubie.position.z = Math.round(cubie.position.z);
+                        cubie.rotation.x = Math.round(cubie.rotation.x / (Math.PI/2)) * (Math.PI/2);
+                        cubie.rotation.y = Math.round(cubie.rotation.y / (Math.PI/2)) * (Math.PI/2);
+                        cubie.rotation.z = Math.round(cubie.rotation.z / (Math.PI/2)) * (Math.PI/2);
+                    });
+
+                    scene.remove(pivot);
+                    isAnimatingMove = false;
+                    playBeep(480, 0.04);
+                    if (onComplete) onComplete();
+                }
+            }
+            animateRotation();
+        }
+
+        // --- 6. Camera & AR Overlay ---
         const video = document.getElementById('webcam');
         const hudCanvas = document.getElementById('hud-canvas');
         const hudCtx = hudCanvas.getContext('2d');
@@ -949,7 +1062,9 @@
 
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
-        // --- Finalize & Validate Cube ---
+        // --- 7. Finalize, Solve with Go WASM & Animate ---
+        let rawSolutionMoves = "";
+
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
@@ -995,32 +1110,65 @@
                     camera.lookAt(0, -0.7, 0);
                     controls.update();
 
-                    // 4. Resize Three.js renderer to fill adjusted canvas area
                     setTimeout(() => {
                         handleResize();
                     }, 50);
 
-                    // 5. Reveal inspection modal with validated sequence
+                    // 4. Calculate Solution via Go WASM directly in browser
+                    const t0 = performance.now();
+                    let solutionStr = "";
+                    if (typeof window.kociembaSolve === "function") {
+                        solutionStr = window.kociembaSolve(data.kociemba_string);
+                    }
+                    const t1 = performance.now();
+
                     const hud = document.getElementById('inspection-hud');
                     hud.style.display = 'flex';
-                    document.getElementById('kociemba-display').innerText = data.kociemba_string;
 
-                    // 6. Navigate to Go/Wasm solver passing state via query parameter and storage
-                    document.getElementById('go-to-solver-btn').onclick = () => {
-                        const state = data.kociemba_string;
-                        localStorage.setItem('rubiks_scanned_state', state);
+                    if (solutionStr && !solutionStr.startsWith("Error")) {
+                        rawSolutionMoves = solutionStr.trim();
+                        solutionMoves = rawSolutionMoves.split(/\s+/);
+                        document.getElementById('kociemba-display').innerHTML = 
+                            `<strong>Solution (${solutionMoves.length} moves):</strong><br>${rawSolutionMoves}<br><span style="color:#aaa; font-size:0.75rem;">Calculated in ${(t1 - t0).toFixed(2)} ms</span>`;
+                    } else {
+                        rawSolutionMoves = data.kociemba_string;
+                        document.getElementById('kociemba-display').innerText = data.kociemba_string;
+                    }
 
-                        const solverUrl = `http://localhost:3000/?state=${encodeURIComponent(state)}`;
-                        window.open(solverUrl, '_blank');
+                    // 5. Play Solution Animation on the 3D Cube
+                    const solveBtn = document.getElementById('go-to-solver-btn');
+                    solveBtn.onclick = () => {
+                        if (!solutionMoves.length || isAutoSolving) return;
+
+                        isAutoSolving = true;
+                        solveBtn.disabled = true;
+                        solveBtn.innerText = "Solving...";
+
+                        let moveIdx = 0;
+                        function playNext() {
+                            if (moveIdx >= solutionMoves.length) {
+                                playChime();
+                                solveBtn.innerText = "🎉 Solved!";
+                                solveBtn.disabled = true;
+                                isAutoSolving = false;
+                                return;
+                            }
+                            const move = solutionMoves[moveIdx];
+                            moveIdx++;
+                            applyMove3D(move, () => {
+                                setTimeout(playNext, 80);
+                            });
+                        }
+                        playNext();
                     };
 
-                    // 7. Copy 54-char Kociemba sequence to clipboard
+                    // 6. Copy Sequence
                     document.getElementById('copy-btn').onclick = () => {
-                        navigator.clipboard.writeText(data.kociemba_string);
+                        navigator.clipboard.writeText(rawSolutionMoves);
                         playBeep(880, 0.1);
                         document.getElementById('copy-btn').innerText = "Copied! ✓";
                         setTimeout(() => {
-                            document.getElementById('copy-btn').innerText = "Copy Sequence";
+                            document.getElementById('copy-btn').innerText = "Copy Solution";
                         }, 1800);
                     };
                 } else {
@@ -1035,6 +1183,7 @@
             }
         }
 
+        // --- 8. Render Loop ---
         function animate() {
             requestAnimationFrame(animate);
             if (!isScanCompleted) {
