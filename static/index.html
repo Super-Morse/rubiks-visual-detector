@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rubik's Live AR Scanner</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
@@ -18,7 +19,6 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-style: normal;
             background: #0d0e12;
             color: #f0f0f5;
             height: 100vh;
@@ -28,14 +28,14 @@
             overflow: hidden;
         }
 
-        /* Top-Right Signature Badge */
+        /* Signature Badge */
         .brand-signature {
-            position: absolute;
+            position: fixed;
             top: 14px;
             right: 18px;
             z-index: 1000;
             color: #ff5800;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 800;
             letter-spacing: 0.5px;
             background: rgba(18, 18, 24, 0.92);
@@ -44,6 +44,7 @@
             border: 2px solid #318ce7;
             box-shadow: 0 0 14px rgba(49, 140, 231, 0.4);
             pointer-events: none;
+            transition: opacity 0.3s;
         }
 
         /* DESKTOP LAYOUT (Vertical 50/50 Split) */
@@ -55,15 +56,7 @@
             border-right: 2px solid rgba(255, 255, 255, 0.12);
             display: flex;
             background: #000;
-            transition: flex 0.4s ease, height 0.4s ease, opacity 0.4s ease;
-        }
-
-        #scanner-pane.collapsed {
-            flex: 0 !important;
-            height: 0 !important;
-            opacity: 0;
-            pointer-events: none;
-            border: none !important;
+            transition: all 0.4s ease;
         }
 
         #cube-pane {
@@ -72,10 +65,24 @@
             height: 100%;
             overflow: hidden;
             background: #0d0e12;
-            transition: flex 0.4s ease, height 0.4s ease;
+            transition: all 0.4s ease;
         }
 
-        /* HUD Header */
+        /* Reposition 3D canvas below success modal in inspection mode */
+        #cube-pane.inspecting #cube-container {
+            position: absolute;
+            top: 195px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 195px);
+        }
+
+        #cube-pane.inspecting .brand-signature {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Top HUD in Scanner */
         .hud-header {
             position: absolute;
             top: 12px;
@@ -147,7 +154,6 @@
             white-space: nowrap;
         }
 
-        /* Camera wrapper */
         .video-wrapper {
             position: relative;
             width: 100%;
@@ -173,7 +179,7 @@
             z-index: 20;
         }
 
-        /* Unified Bottom Floating Controls */
+        /* Bottom Floating Controls */
         .bottom-panel-container {
             position: absolute;
             bottom: 10px;
@@ -235,9 +241,7 @@
             transition: transform 0.12s, box-shadow 0.12s;
         }
 
-        .mini-sticker:active {
-            transform: scale(1.2);
-        }
+        .mini-sticker:active { transform: scale(1.2); }
 
         .btn {
             background: rgba(40, 40, 52, 0.9);
@@ -268,13 +272,8 @@
             border: none; 
         }
 
-        .btn-confirm:hover:not(:disabled) {
-            background: #00e67a;
-        }
-
-        .btn-confirm.ready-pulse {
-            animation: pulse-green 1.2s infinite;
-        }
+        .btn-confirm:hover:not(:disabled) { background: #00e67a; }
+        .btn-confirm.ready-pulse { animation: pulse-green 1.2s infinite; }
 
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
@@ -302,41 +301,49 @@
             height: 100%; 
             cursor: grab; 
             touch-action: none;
+            transition: top 0.3s ease, height 0.3s ease;
         }
         #cube-container:active { cursor: grabbing; }
 
-        /* Fullscreen Inspection HUD */
+        /* Floating 3D Inspection HUD */
         #inspection-hud {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: 14px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(18, 18, 24, 0.94);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 255, 136, 0.4);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            background: rgba(18, 18, 24, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #00ff88;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3), 0 0 30px rgba(0, 0, 0, 0.9);
             border-radius: 16px;
-            padding: 16px 22px;
-            z-index: 500;
+            padding: 14px 20px;
+            z-index: 99999;
             display: none;
             flex-direction: column;
             align-items: center;
-            max-width: 600px;
-            width: 90%;
+            max-width: 520px;
+            width: 92%;
             text-align: center;
+            animation: slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slide-in {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
         }
 
         #inspection-hud h2 {
             color: #00ff88;
-            font-size: 1.3rem;
-            margin-bottom: 6px;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
         }
 
         #inspection-hud p {
             color: #bbb;
-            font-size: 0.82rem;
-            margin-bottom: 10px;
+            font-size: 0.78rem;
+            margin-bottom: 8px;
+            line-height: 1.35;
         }
 
         #kociemba-display {
@@ -346,15 +353,18 @@
             color: #ffaa00;
             padding: 8px 12px;
             border-radius: 8px;
-            font-size: 0.88rem;
-            margin-bottom: 12px;
+            font-size: 0.82rem;
+            margin-bottom: 10px;
             word-break: break-all;
             user-select: text;
+            width: 100%;
         }
 
         .inspection-actions {
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         }
 
         #camera-blocked-modal {
@@ -383,38 +393,39 @@
                 height: -webkit-fill-available;
             }
 
-            .brand-signature {
-                top: 8px;
-                right: 10px;
-                font-size: 0.72rem;
-                padding: 4px 8px;
-                border-width: 1.5px;
-            }
-
-            /* TOP HALF: Exactly 50% of screen */
+            /* TOP HALF: 50% Camera */
             #scanner-pane {
                 width: 100vw;
                 height: 50vh;
                 height: 50dvh;
                 flex: none;
                 border-right: none;
-                /* Prominent horizontal divider line */
                 border-bottom: 3px solid #318ce7;
                 box-shadow: 0 4px 18px rgba(49, 140, 231, 0.35);
             }
 
-            /* BOTTOM HALF: Exactly 50% of screen */
+            /* BOTTOM HALF: 50% 3D Cube */
             #cube-pane {
                 width: 100vw;
                 height: 50vh;
                 height: 50dvh;
                 flex: none;
+                position: relative;
             }
 
-            /* In inspection mode, expand cube to 100% full screen */
-            #scanner-pane.collapsed + #cube-pane {
-                height: 100vh;
-                height: 100dvh;
+            #cube-pane.inspecting #cube-container {
+                top: 175px;
+                height: calc(100% - 175px);
+            }
+
+            /* Morse Code signature: Positioned in the BOTTOM HALF (above the 3D cube) */
+            .brand-signature {
+                position: absolute;
+                top: 10px;
+                right: 12px;
+                font-size: 0.72rem;
+                padding: 4px 10px;
+                border-width: 1.5px;
             }
 
             .hud-header {
@@ -425,72 +436,29 @@
                 border-radius: 8px;
             }
 
-            .instruction-title {
-                font-size: 0.88rem;
-            }
+            .instruction-title { font-size: 0.88rem; }
+            .orientation-badge { font-size: 0.68rem; padding: 2px 6px; }
+            .step-badge { font-size: 0.72rem; padding: 2px 8px; }
 
-            .orientation-badge {
-                font-size: 0.68rem;
-                padding: 2px 6px;
-            }
-
-            .step-badge {
-                font-size: 0.72rem;
-                padding: 2px 8px;
-            }
-
-            /* Ultra-compact bottom controls for mobile */
-            .bottom-panel-container {
-                bottom: 6px;
-                gap: 4px;
-            }
-
-            .control-hint {
-                font-size: 0.62rem;
-                padding: 2px 8px;
-            }
-
-            .bottom-control-bar {
-                padding: 4px 8px;
-                gap: 6px;
-                border-radius: 8px;
-            }
-
-            .mini-grid {
-                grid-template-columns: repeat(3, 16px);
-                grid-gap: 2px;
-            }
-
-            .mini-sticker {
-                width: 16px;
-                height: 16px;
-            }
-
-            .btn {
-                padding: 5px 9px;
-                font-size: 0.72rem;
-                border-radius: 5px;
-            }
-
-            .cube-hud {
-                bottom: 8px;
-                right: 8px;
-            }
+            .bottom-panel-container { bottom: 6px; gap: 4px; }
+            .control-hint { font-size: 0.62rem; padding: 2px 8px; }
+            .bottom-control-bar { padding: 4px 8px; gap: 6px; border-radius: 8px; }
+            .mini-grid { grid-template-columns: repeat(3, 16px); grid-gap: 2px; }
+            .mini-sticker { width: 16px; height: 16px; }
+            .btn { padding: 5px 9px; font-size: 0.72rem; border-radius: 5px; }
+            .cube-hud { bottom: 8px; right: 8px; }
 
             #inspection-hud {
-                width: 94%;
+                width: 92%;
                 padding: 12px 14px;
-                top: 12px;
+                top: 10px;
             }
-            #inspection-hud h2 { font-size: 1.1rem; }
-            #kociemba-display { font-size: 0.78rem; }
+            #inspection-hud h2 { font-size: 1.05rem; }
+            #kociemba-display { font-size: 0.74rem; padding: 7px; margin-bottom: 8px; }
         }
     </style>
 </head>
 <body>
-
-    <!-- Signature Badge in top right -->
-    <div class="brand-signature">Morse Code ..- ._ 📟</div>
 
     <!-- Camera Blocked Screen -->
     <div id="camera-blocked-modal">
@@ -543,25 +511,28 @@
 
     <!-- BOTTOM: Interactive 3D Rubik's Cube (50vh on Mobile) -->
     <div id="cube-pane">
+        <!-- Signature Badge (Positioned inside cube-pane) -->
+        <div class="brand-signature">Morse Code ..- ._ 📟</div>
+
         <div id="cube-container"></div>
+
         <div class="cube-hud">
             <button class="btn btn-reset" id="reset-btn">Reset</button>
         </div>
+    </div>
 
-        <!-- Floating 3D Inspection HUD -->
-        <div id="inspection-hud">
-            <h2>Cube Validated & Inspected!</h2>
-            <p>Drag with touch or mouse to inspect all faces before solving.</p>
-            <div id="kociemba-display">...</div>
-            <div class="inspection-actions">
-                <button class="btn btn-confirm" id="copy-btn">Copy Sequence</button>
-                <button class="btn" onclick="location.reload()">Scan Another</button>
-            </div>
+    <!-- Floating 3D Inspection Modal (Fixed in Body for Top-Level Stacking) -->
+    <div id="inspection-hud">
+        <h2>Cube Scanned Successfully!</h2>
+        <p>All 6 faces validated. Drag the 3D cube below to inspect the solution.</p>
+        <div id="kociemba-display">Calculating...</div>
+        <div class="inspection-actions">
+            <button class="btn btn-confirm" id="copy-btn">Copy Sequence</button>
+            <button class="btn" onclick="location.reload()">Scan Another</button>
         </div>
     </div>
 
     <script>
-        // Web Audio Synthesizer
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq = 600, duration = 0.08) {
             try {
@@ -727,7 +698,6 @@
         }
         initCameraStrict();
 
-        // Responsive AR HUD: dynamically scales for both mobile 50vh and desktop
         function drawARHUD(statusColor = 'rgba(0, 255, 136, 0.8)') {
             if (isScanCompleted) return;
             const w = video.clientWidth;
@@ -741,7 +711,6 @@
             const bottomMargin = isMobile ? 68 : 95;
             const safeZoneHeight = Math.max(100, h - topMargin - bottomMargin);
 
-            // Compute ideal square fitting safe zone
             const maxAllowed = isMobile ? 210 : 270;
             const size = Math.floor(Math.min(w * 0.72, safeZoneHeight * 0.92, maxAllowed));
             const startX = Math.floor((w - size) / 2);
@@ -750,19 +719,16 @@
 
             hudCtx.clearRect(0, 0, w, h);
 
-            // Semi-transparent overlay surrounding the target box
             hudCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             hudCtx.fillRect(0, 0, w, startY);
             hudCtx.fillRect(0, startY + size, w, h - (startY + size));
             hudCtx.fillRect(0, startY, startX, size);
             hudCtx.fillRect(startX + size, startY, w - (startX + size), size);
 
-            // 3x3 Outer border
             hudCtx.lineWidth = 3;
             hudCtx.strokeStyle = statusColor;
             hudCtx.strokeRect(startX, startY, size, size);
 
-            // Grid lines
             hudCtx.lineWidth = 1;
             hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             for (let i = 1; i < 3; i++) {
@@ -777,7 +743,6 @@
                 hudCtx.stroke();
             }
 
-            // Top direction guide
             if (currentStepIdx < STEPS.length) {
                 const stepData = STEPS[currentStepIdx];
                 hudCtx.fillStyle = stepData.topHex;
@@ -861,7 +826,6 @@
                 if (res.ok) {
                     const data = await res.json();
 
-                    // If less than 9 stickers detected, smoothly draw idle AR HUD without errors
                     if (!data.is_valid_face) {
                         drawARHUD('rgba(255, 255, 255, 0.25)');
                         return;
@@ -914,8 +878,6 @@
         updateStepHeader(0);
 
         confirmBtn.addEventListener('click', () => {
-            if (!isFaceFrozenForReview && currentStepIdx >= STEPS.length) return;
-
             const currentFace = STEPS[currentStepIdx].face;
             capturedFaces[currentFace] = [...currentStickers];
             update3DFaceColors(currentFace, currentStickers);
@@ -976,6 +938,7 @@
 
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
+        // --- Finalize & Validate Cube ---
         async function finalizeCube() {
             playChime();
             isScanCompleted = true;
@@ -1000,27 +963,48 @@
                 const data = await res.json();
 
                 if (res.ok && data.is_valid) {
-                    document.getElementById('scanner-pane').classList.add('collapsed');
+                    // 1. Hide the camera pane completely on both mobile and desktop
+                    const scannerPane = document.getElementById('scanner-pane');
+                    scannerPane.style.display = 'none';
+
+                    // 2. Expand cube pane and apply inspecting class to shift canvas down
+                    const cubePane = document.getElementById('cube-pane');
+                    cubePane.style.height = '100vh';
+                    cubePane.style.height = '100dvh';
+                    cubePane.classList.add('inspecting');
+
+                    // Adjust camera distance slightly for comfortable mobile framing
+                    if (window.innerWidth <= 900) {
+                        camera.position.set(6.2, 4.2, 6.6);
+                    }
+
+                    // 3. Resize Three.js viewport to fill the new dedicated lower area
                     setTimeout(() => {
                         handleResize();
-                    }, 450);
+                    }, 50);
 
-                    document.getElementById('inspection-hud').style.display = 'flex';
+                    // 4. Show the top-level inspection modal
+                    const hud = document.getElementById('inspection-hud');
+                    hud.style.display = 'flex';
                     document.getElementById('kociemba-display').innerText = data.kociemba_string;
 
-                    document.getElementById('copy-btn').addEventListener('click', () => {
+                    document.getElementById('copy-btn').onclick = () => {
                         navigator.clipboard.writeText(data.kociemba_string);
                         playBeep(880, 0.1);
-                        document.getElementById('copy-btn').innerText = "Copied!";
-                        setTimeout(() => document.getElementById('copy-btn').innerText = "Copy Sequence", 1500);
-                    });
+                        document.getElementById('copy-btn').innerText = "Copied! ✓";
+                        setTimeout(() => {
+                            document.getElementById('copy-btn').innerText = "Copy Sequence";
+                        }, 1800);
+                    };
                 } else {
                     alert("Validation Error: " + (data.detail || "Invalid color distribution. Review faces."));
                     currentStepIdx = 5;
                     updateStepHeader(5);
+                    isScanCompleted = false;
                 }
             } catch (err) {
-                alert("Failed to communicate with validation service: " + err.message);
+                alert("Communication Error: " + err.message);
+                isScanCompleted = false;
             }
         }
 
@@ -1045,9 +1029,7 @@
         }
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(handleResize, 200);
-        });
+        window.addEventListener('orientationchange', () => setTimeout(handleResize, 200));
         video.addEventListener('loadedmetadata', () => drawARHUD());
     </script>
 </body>
