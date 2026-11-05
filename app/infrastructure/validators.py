@@ -41,16 +41,12 @@ class StandardCubeValidator(ICubeValidator):
 
     def _validate_color_distribution(self, cube_state: CubeState) -> None:
         all_stickers = [
-            color
-            for face in cube_state.faces.values()
-            for color in face.stickers
+            color for face in cube_state.faces.values() for color in face.stickers
         ]
 
         counts = Counter(all_stickers)
         anomalies = {
-            color.value: count
-            for color, count in counts.items()
-            if count != 9
+            color.value: count for color, count in counts.items() if count != 9
         }
 
         if anomalies:

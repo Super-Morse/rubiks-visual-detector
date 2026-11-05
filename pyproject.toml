@@ -32,4 +32,11 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "A", "C4"]
-ignore = []
+ignore = [
+    "B008",
+    "E501",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 120
+ignore-overlong-task-comments = true

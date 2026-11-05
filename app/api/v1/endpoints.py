@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.api.deps import get_cube_service, get_face_detector
 from app.api.schemas import CubeValidationSuccess, FullScanResponse, ValidateCubeRequest
-from app.domain.exceptions import CubeDomainException
+from app.domain.exceptions import CubeDomainError
 from app.domain.interfaces import IFaceDetector
-from app.domain.models import FacePosition, FaceScanResult, FaceState
+from app.domain.models import FaceScanResult, FaceState
 from app.services.cube_service import CubeScannerService
 
 router = APIRouter()
@@ -34,12 +34,12 @@ async def scan_cube_face(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(val_err),
-        )
+        ) from None
     except RuntimeError as run_err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(run_err),
-        )
+        ) from None
 
 
 @router.post(
@@ -64,13 +64,15 @@ async def validate_cube(
         return CubeValidationSuccess(
             is_valid=True,
             kociemba_string=kociemba,
-            detected_faces={pos: state.stickers for pos, state in cube_state.faces.items()},
+            detected_faces={
+                pos: state.stickers for pos, state in cube_state.faces.items()
+            },
         )
-    except CubeDomainException as exc:
+    except CubeDomainError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
-        )
+        ) from None
 
 
 @router.post(
@@ -108,13 +110,13 @@ async def scan_full_cube(
             kociemba_string=kociemba,
             face_scans=scan_details,
         )
-    except (CubeDomainException, ValueError) as exc:
+    except (CubeDomainError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
-        )
+        ) from None
     except RuntimeError as run_err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(run_err),
-        )
+        ) from None

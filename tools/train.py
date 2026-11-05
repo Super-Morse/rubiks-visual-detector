@@ -4,6 +4,7 @@ Trains on the unified dataset and exports an optimized ONNX model for production
 """
 
 from pathlib import Path
+
 from ultralytics import YOLO
 
 
@@ -23,7 +24,7 @@ def train_and_export(
     model = YOLO(model_name)
 
     print(f"Starting training on {yaml_path} for {epochs} epochs...")
-    results = model.train(
+    model.train(
         data=str(yaml_path),
         epochs=epochs,
         imgsz=imgsz,
@@ -39,7 +40,9 @@ def train_and_export(
     print(f"mAP50-95: {metrics.box.map:.4f}")
     print(f"mAP50:    {metrics.box.map50:.4f}")
 
-    print("\nExporting model to optimized ONNX format for production Docker deployment...")
+    print(
+        "\nExporting model to optimized ONNX format for production Docker deployment..."
+    )
     exported_path = model.export(format="onnx", dynamic=False, simplify=True)
     print(f"Successfully exported ONNX model to: {exported_path}")
 

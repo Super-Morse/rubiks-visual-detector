@@ -3,8 +3,9 @@ Dataset Merger & Class Normalizer for YOLO datasets.
 Standardizes class labels and merges multiple datasets into one unified dataset.
 """
 
-from pathlib import Path
 import shutil
+from pathlib import Path
+
 import yaml
 
 # Standard unified classes for our project
@@ -46,7 +47,7 @@ def process_dataset(src_dir: Path, out_dir: Path) -> None:
 
     base_dir = yaml_path.parent
 
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         meta = yaml.safe_load(f)
 
     src_names = meta.get("names", [])
@@ -70,8 +71,10 @@ def process_dataset(src_dir: Path, out_dir: Path) -> None:
             base_dir / "images" / src_split,
             base_dir / src_split,
         ]
-        
-        src_img_dir = next((d for d in candidate_img_dirs if d.exists() and d.is_dir()), None)
+
+        src_img_dir = next(
+            (d for d in candidate_img_dirs if d.exists() and d.is_dir()), None
+        )
         if not src_img_dir:
             continue
 
@@ -80,7 +83,9 @@ def process_dataset(src_dir: Path, out_dir: Path) -> None:
             base_dir / "labels" / src_split,
             base_dir / "labels",
         ]
-        src_lbl_dir = next((d for d in candidate_lbl_dirs if d.exists() and d.is_dir()), None)
+        src_lbl_dir = next(
+            (d for d in candidate_lbl_dirs if d.exists() and d.is_dir()), None
+        )
 
         target_img_dir = out_dir / "images" / target_split
         target_lbl_dir = out_dir / "labels" / target_split
@@ -100,7 +105,7 @@ def process_dataset(src_dir: Path, out_dir: Path) -> None:
                 lbl_file = src_lbl_dir / f"{img_file.stem}.txt"
                 if lbl_file.exists():
                     remapped_lines = []
-                    with open(lbl_file, "r", encoding="utf-8") as f:
+                    with open(lbl_file, encoding="utf-8") as f:
                         for line in f:
                             parts = line.strip().split()
                             if not parts:
@@ -110,7 +115,9 @@ def process_dataset(src_dir: Path, out_dir: Path) -> None:
 
                             if class_name in CLASS_TO_ID:
                                 new_cls_id = CLASS_TO_ID[class_name]
-                                remapped_lines.append(f"{new_cls_id} {' '.join(parts[1:])}")
+                                remapped_lines.append(
+                                    f"{new_cls_id} {' '.join(parts[1:])}"
+                                )
 
                     dest_lbl = target_lbl_dir / f"{base_name}.txt"
                     with open(dest_lbl, "w", encoding="utf-8") as f:
@@ -141,7 +148,7 @@ def main():
         "path": "../dataset",
         "train": "images/train",
         "val": "images/val",
-        "names": {idx: name for idx, name in enumerate(CANONICAL_CLASSES)},
+        "names": dict(enumerate(CANONICAL_CLASSES)),
     }
 
     with open(output_dir / "data.yaml", "w", encoding="utf-8") as f:
@@ -149,13 +156,13 @@ def main():
 
     train_count = len(list((output_dir / "images" / "train").glob("*.*")))
     val_count = len(list((output_dir / "images" / "val").glob("*.*")))
-    print(f"\n==========================================")
+    print("\n==========================================")
     print(f"Successfully unified dataset into '{output_dir}'!")
     print(f"Total Train images: {train_count}")
     print(f"Total Val images:   {val_count}")
     print(f"Total Combined:     {train_count + val_count}")
     print(f"Canonical classes:  {CANONICAL_CLASSES}")
-    print(f"==========================================")
+    print("==========================================")
 
 
 if __name__ == "__main__":

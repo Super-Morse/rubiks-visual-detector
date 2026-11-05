@@ -71,19 +71,13 @@ class TestCubeValidator:
         cube = create_valid_solved_cube()
         kociemba_str = cube.to_kociemba_string()
 
-        expected = (
-            "UUUUUUUUU"
-            "RRRRRRRRR"
-            "FFFFFFFFF"
-            "DDDDDDDDD"
-            "LLLLLLLLL"
-            "BBBBBBBBB"
-        )
+        expected = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
         assert kociemba_str == expected
         assert len(kociemba_str) == 54
 
     def test_to_kociemba_string_with_explicit_mapping(self) -> None:
         from app.domain.models import DEFAULT_COLOR_TO_FACE
+
         cube = create_valid_solved_cube()
         kociemba_str = cube.to_kociemba_string(color_mapping=DEFAULT_COLOR_TO_FACE)
         assert len(kociemba_str) == 54

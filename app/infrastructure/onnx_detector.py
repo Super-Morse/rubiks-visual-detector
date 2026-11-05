@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import cv2
 import numpy as np
 import onnxruntime as ort
@@ -31,7 +32,9 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         session_options = ort.SessionOptions()
         session_options.intra_op_num_threads = 2
-        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        session_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
 
         self.session = ort.InferenceSession(
             str(model_file),
@@ -131,13 +134,15 @@ class YoloOnnxFaceDetector(IFaceDetector):
             box = boxes[i]
             cy = (box[1] + box[3]) / 2.0
             cx = (box[0] + box[2]) / 2.0
-            items.append({
-                "box": box,
-                "score": scores[i],
-                "class_id": classes[i],
-                "cx": cx,
-                "cy": cy,
-            })
+            items.append(
+                {
+                    "box": box,
+                    "score": scores[i],
+                    "class_id": classes[i],
+                    "cx": cx,
+                    "cy": cy,
+                }
+            )
 
         # Sort top to bottom
         items.sort(key=lambda it: it["cy"])
@@ -180,7 +185,9 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         pad_w = (target_size - new_w) / 2
         pad_h = (target_size - new_h) / 2
-        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = resized
+        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = (
+            resized
+        )
 
         rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         tensor = rgb.astype(np.float32) / 255.0

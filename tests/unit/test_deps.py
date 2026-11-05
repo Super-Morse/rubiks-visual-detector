@@ -16,6 +16,7 @@ def test_get_cube_validator_returns_singleton():
 
 def test_get_face_detector_returns_singleton(monkeypatch):
     """Validates that get_face_detector instantiates detector and respects lru_cache."""
+
     class DummyDetector(IFaceDetector):
         def detect(self, image_bytes: bytes):
             pass
@@ -36,6 +37,7 @@ def test_get_face_detector_returns_singleton(monkeypatch):
 
 def test_get_cube_service_wires_dependencies(monkeypatch):
     """Validates that get_cube_service injects detector and validator into CubeScannerService."""
+
     class DummyDetector(IFaceDetector):
         def detect(self, image_bytes: bytes):
             pass

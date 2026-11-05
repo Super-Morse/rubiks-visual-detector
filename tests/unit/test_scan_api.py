@@ -1,5 +1,6 @@
 import io
 from unittest.mock import MagicMock
+
 import cv2
 import numpy as np
 import pytest
@@ -126,7 +127,9 @@ def test_validate_cube_endpoint_success(client_with_mock_detector: TestClient):
     assert len(data["kociemba_string"]) == 54
 
 
-def test_validate_cube_endpoint_invalid_distribution(client_with_mock_detector: TestClient):
+def test_validate_cube_endpoint_invalid_distribution(
+    client_with_mock_detector: TestClient,
+):
     payload = {
         "faces": [
             {"face": "U", "stickers": ["white"] * 9},

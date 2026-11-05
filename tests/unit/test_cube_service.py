@@ -76,18 +76,20 @@ def test_service_assemble_and_validate_success():
 
     assert isinstance(cube, CubeState)
     assert cube.to_kociemba_string() == (
-        "UUUUUUUUU"
-        "RRRRRRRRR"
-        "FFFFFFFFF"
-        "DDDDDDDDD"
-        "LLLLLLLLL"
-        "BBBBBBBBB"
+        "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
     )
 
 
 def test_service_process_six_images_success():
     """Tests that 6 valid images are correctly processed and assigned to their respective faces."""
-    colors = [Color.WHITE, Color.RED, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.BLUE]
+    colors = [
+        Color.WHITE,
+        Color.RED,
+        Color.GREEN,
+        Color.YELLOW,
+        Color.ORANGE,
+        Color.BLUE,
+    ]
     detector = StubDetector(colors)
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
 
@@ -101,7 +103,9 @@ def test_service_process_six_images_success():
 
 def test_service_process_six_images_count_mismatch():
     """Tests that passing any number of images other than exactly 6 raises ValueError."""
-    service = CubeScannerService(detector=StubDetector([]), validator=StandardCubeValidator())
+    service = CubeScannerService(
+        detector=StubDetector([]), validator=StandardCubeValidator()
+    )
 
     with pytest.raises(ValueError, match="Expected exactly 6 images"):
         service.process_six_images([b"fake"] * 5)
@@ -109,7 +113,14 @@ def test_service_process_six_images_count_mismatch():
 
 def test_service_process_six_images_rejects_duplicate_center():
     """Tests that passing duplicate center faces raises DuplicateCenterColorError."""
-    colors = [Color.WHITE, Color.WHITE, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.BLUE]
+    colors = [
+        Color.WHITE,
+        Color.WHITE,
+        Color.GREEN,
+        Color.YELLOW,
+        Color.ORANGE,
+        Color.BLUE,
+    ]
     detector = StubDetector(colors)
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
 
@@ -148,5 +159,7 @@ def test_service_process_six_images_unmapped_center_color(monkeypatch):
 
     service = CubeScannerService(detector=detector, validator=StandardCubeValidator())
 
-    with pytest.raises(ValueError, match="Unknown center color detected: unsupported_color"):
+    with pytest.raises(
+        ValueError, match="Unknown center color detected: unsupported_color"
+    ):
         service.process_six_images([b"fake"] * 6)

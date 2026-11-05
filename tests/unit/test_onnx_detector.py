@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import cv2
 import numpy as np
 import pytest
@@ -100,7 +101,9 @@ def test_detect_full_pipeline_and_grid_sorting(monkeypatch, black_image_bytes):
         synthetic_tensor[0, 3, i] = 40.0
         synthetic_tensor[0, 4 + class_id, i] = 0.95
 
-    monkeypatch.setattr(detector.session, "run", lambda output_names, input_feed: [synthetic_tensor])
+    monkeypatch.setattr(
+        detector.session, "run", lambda output_names, input_feed: [synthetic_tensor]
+    )
 
     result = detector.detect(black_image_bytes)
 
@@ -130,7 +133,9 @@ def test_detect_more_than_9_stickers_picks_top_9(monkeypatch, black_image_bytes)
         synthetic_tensor[0, 3, i] = 40.0
         synthetic_tensor[0, 4, i] = 0.99 if i < 9 else 0.30
 
-    monkeypatch.setattr(detector.session, "run", lambda output_names, input_feed: [synthetic_tensor])
+    monkeypatch.setattr(
+        detector.session, "run", lambda output_names, input_feed: [synthetic_tensor]
+    )
 
     result = detector.detect(black_image_bytes)
     assert len(result.stickers) == 9
@@ -151,7 +156,9 @@ def test_preprocess_tall_image_aspect_ratio(monkeypatch, tall_black_image_bytes)
         synthetic_tensor[0, 3, i] = 40.0
         synthetic_tensor[0, 4, i] = 0.95
 
-    monkeypatch.setattr(detector.session, "run", lambda output_names, input_feed: [synthetic_tensor])
+    monkeypatch.setattr(
+        detector.session, "run", lambda output_names, input_feed: [synthetic_tensor]
+    )
 
     result = detector.detect(tall_black_image_bytes)
     assert result.is_valid_face is True

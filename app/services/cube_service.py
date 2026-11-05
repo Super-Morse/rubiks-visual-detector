@@ -1,4 +1,4 @@
-from app.domain.exceptions import CubeDomainException, DuplicateCenterColorError
+from app.domain.exceptions import DuplicateCenterColorError
 from app.domain.interfaces import ICubeValidator, IFaceDetector
 from app.domain.models import (
     DEFAULT_COLOR_TO_FACE,
@@ -20,26 +20,32 @@ class CubeScannerService:
         """Processes a single image frame and returns detected 3x3 stickers."""
         return self._detector.detect(image_bytes)
 
-    def assemble_and_validate(self, face_states: dict[FacePosition, FaceState]) -> CubeState:
+    def assemble_and_validate(
+        self, face_states: dict[FacePosition, FaceState]
+    ) -> CubeState:
         """Assembles 6 faces into a CubeState and verifies structural integrity.
 
         Raises:
-            CubeDomainException: If the cube violates physical 3x3 constraints.
+            CubeDomainError: If the cube violates physical 3x3 constraints.
         """
         cube = CubeState(faces=face_states)
         self._validator.validate(cube)
         return cube
 
-    def process_six_images(self, images: list[bytes]) -> tuple[CubeState, dict[FacePosition, FaceScanResult]]:
+    def process_six_images(
+        self, images: list[bytes]
+    ) -> tuple[CubeState, dict[FacePosition, FaceScanResult]]:
         """Processes 6 images, auto-assigns faces by center color, and validates the cube.
 
         Raises:
             ValueError: If exactly 6 images are not provided or any face scan is incomplete.
             DuplicateCenterColorError: If multiple faces have the same center sticker color.
-            CubeDomainException: If assembled cube state fails validation.
+            CubeDomainError: If assembled cube state fails validation.
         """
         if len(images) != 6:
-            raise ValueError(f"Expected exactly 6 images for a full cube scan, received {len(images)}.")
+            raise ValueError(
+                f"Expected exactly 6 images for a full cube scan, received {len(images)}."
+            )
 
         detected_scans: list[FaceScanResult] = [
             self._detector.detect(img_bytes) for img_bytes in images
@@ -50,7 +56,9 @@ class CubeScannerService:
 
         for idx, scan in enumerate(detected_scans):
             if not scan.is_valid_face or scan.center_color is None:
-                raise ValueError(f"Image #{idx + 1} does not contain a complete 3x3 cube face.")
+                raise ValueError(
+                    f"Image #{idx + 1} does not contain a complete 3x3 cube face."
+                )
 
             center_col = scan.center_color
             target_pos = DEFAULT_COLOR_TO_FACE.get(center_col)

@@ -11,7 +11,7 @@ class ICubeValidator(ABC):
         """Validates cube state.
 
         Raises:
-            CubeDomainException: When cube violates physical or geometric rules.
+            CubeDomainError: When cube violates physical or geometric rules.
         """
         pass
 

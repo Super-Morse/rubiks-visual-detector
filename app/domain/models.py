@@ -1,8 +1,9 @@
-from enum import Enum
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
 
 
-class Color(str, Enum):
+class Color(StrEnum):
     WHITE = "white"
     YELLOW = "yellow"
     GREEN = "green"
@@ -11,7 +12,7 @@ class Color(str, Enum):
     ORANGE = "orange"
 
 
-class FacePosition(str, Enum):
+class FacePosition(StrEnum):
     U = "U"  # Up (Standard: White)
     R = "R"  # Right (Standard: Red)
     F = "F"  # Front (Standard: Green)
