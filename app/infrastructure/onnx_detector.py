@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+
 import cv2  # type: ignore[import-untyped]
 import numpy as np
 import onnxruntime as ort  # type: ignore[import-untyped]
@@ -41,7 +42,9 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         session_options = ort.SessionOptions()
         session_options.intra_op_num_threads = 2
-        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        session_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
 
         self.session = ort.InferenceSession(
             str(model_file),
@@ -183,7 +186,9 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         pad_w = (target_size - new_w) / 2
         pad_h = (target_size - new_h) / 2
-        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = resized
+        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = (
+            resized
+        )
 
         rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         tensor = rgb.astype(np.float32) / 255.0
