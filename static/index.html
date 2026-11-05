@@ -1129,6 +1129,22 @@
                     const hud = document.getElementById('inspection-hud');
                     hud.style.display = 'flex';
 
+                    const solvedString = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
+                    const solveBtn = document.getElementById('go-to-solver-btn');
+
+                    // Check if cube is already in the solved state
+                    if (data.kociemba_string === solvedString) {
+                        standardSolutionStr = "Cube is already solved! (0 moves)";
+                        solutionMoves = [];
+
+                        document.getElementById('kociemba-display').innerText = standardSolutionStr;
+                        solveBtn.innerText = "🎉 Already Solved!";
+                        solveBtn.disabled = true;
+                        playChime();
+                        return;
+                    }
+
+                    // Otherwise, solve scrambled cube via Go WASM
                     let result = "";
                     if (typeof window.kociembaSolve === "function") {
                         result = window.kociembaSolve(data.kociemba_string);
@@ -1137,15 +1153,17 @@
                     }
 
                     if (result && !result.startsWith("Error")) {
-                        // Clean standard WCA space-separated move format
                         standardSolutionStr = result.trim();
                         solutionMoves = standardSolutionStr.split(/\s+/);
                         document.getElementById('kociemba-display').innerText = standardSolutionStr;
+
+                        solveBtn.innerText = "▶ Solve Cube";
+                        solveBtn.disabled = false;
                     } else {
                         document.getElementById('kociemba-display').innerText = result || data.kociemba_string;
                         alert("Solver output: " + result);
                     }
-
+                    
                     // 6. Play Solution Animation on the 3D Cube
                     const solveBtn = document.getElementById('go-to-solver-btn');
                     solveBtn.innerText = "▶ Solve Cube";
