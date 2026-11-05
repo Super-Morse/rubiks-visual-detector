@@ -764,16 +764,17 @@
             if (modifier === "'") targetAngle *= -1;
             if (modifier === "2") targetAngle *= 2;
 
+            // Select active cubies strictly by local cube coordinates
             const activeCubies = [];
             cubies.forEach(cubie => {
-                const pos = Math.round(cubie.getWorldPosition(new THREE.Vector3())[def.axis]);
+                const pos = Math.round(cubie.position[def.axis]);
                 if (pos === def.sign) activeCubies.push(cubie);
             });
 
+            // Pivot rotates within cubeGroup coordinate space
             const pivot = new THREE.Object3D();
             pivot.rotation.set(0, 0, 0);
-            pivot.updateMatrixWorld();
-            scene.add(pivot);
+            cubeGroup.add(pivot);
 
             activeCubies.forEach(cubie => pivot.attach(cubie));
 
@@ -795,12 +796,12 @@
                         cubie.position.x = Math.round(cubie.position.x);
                         cubie.position.y = Math.round(cubie.position.y);
                         cubie.position.z = Math.round(cubie.position.z);
-                        cubie.rotation.x = Math.round(cubie.rotation.x / (Math.PI/2)) * (Math.PI/2);
-                        cubie.rotation.y = Math.round(cubie.rotation.y / (Math.PI/2)) * (Math.PI/2);
-                        cubie.rotation.z = Math.round(cubie.rotation.z / (Math.PI/2)) * (Math.PI/2);
+                        cubie.rotation.x = Math.round(cubie.rotation.x / (Math.PI / 2)) * (Math.PI / 2);
+                        cubie.rotation.y = Math.round(cubie.rotation.y / (Math.PI / 2)) * (Math.PI / 2);
+                        cubie.rotation.z = Math.round(cubie.rotation.z / (Math.PI / 2)) * (Math.PI / 2);
                     });
 
-                    scene.remove(pivot);
+                    cubeGroup.remove(pivot);
                     isAnimatingMove = false;
                     playBeep(480, 0.04);
                     if (onComplete) onComplete();
@@ -1072,9 +1073,6 @@
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
 
         // --- 7. Finalize, Solve with Go WASM & Animate ---
-        let rawSolutionMoves = "";
-
-        // --- 7. Finalize, Solve with Go WASM & Animate ---
         let standardSolutionStr = "";
 
         async function finalizeCube() {
@@ -1110,7 +1108,11 @@
                     cubePane.style.height = '100dvh';
                     cubePane.classList.add('inspecting');
 
-                    // 3. Elevate 3D cube positioning
+                    // 3. Reset cube orientation to canonical alignment (Up=+Y, Front=+Z)
+                    cubeGroup.rotation.set(0, 0, 0);
+                    cubeGroup.updateMatrixWorld(true);
+
+                    // 4. Elevate 3D camera positioning via OrbitControls
                     const isMobile = window.innerWidth <= 900;
                     if (isMobile) {
                         camera.position.set(8.5, 4.2, 8.5);
@@ -1123,7 +1125,7 @@
 
                     setTimeout(() => handleResize(), 50);
 
-                    // 4. Calculate Solution via Go WASM
+                    // 5. Calculate Solution via Go WASM and Reveal Modal
                     const hud = document.getElementById('inspection-hud');
                     hud.style.display = 'flex';
 
@@ -1135,17 +1137,16 @@
                     }
 
                     if (result && !result.startsWith("Error")) {
-                        // Standard clean move format: "D U' D2 B2 R U D' B' U2 D' F B U2 F2 R F2 B' U2 F2 D'"
+                        // Clean standard WCA space-separated move format
                         standardSolutionStr = result.trim();
                         solutionMoves = standardSolutionStr.split(/\s+/);
-
                         document.getElementById('kociemba-display').innerText = standardSolutionStr;
                     } else {
                         document.getElementById('kociemba-display').innerText = result || data.kociemba_string;
                         alert("Solver output: " + result);
                     }
 
-                    // 5. Play Solution Animation on the 3D Cube
+                    // 6. Play Solution Animation on the 3D Cube
                     const solveBtn = document.getElementById('go-to-solver-btn');
                     solveBtn.innerText = "▶ Solve Cube";
                     solveBtn.disabled = false;
@@ -1175,7 +1176,7 @@
                         playNext();
                     };
 
-                    // 6. Copy standard solution moves
+                    // 7. Copy standard solution moves
                     document.getElementById('copy-btn').onclick = () => {
                         navigator.clipboard.writeText(standardSolutionStr);
                         playBeep(880, 0.1);
@@ -1196,6 +1197,7 @@
             }
         }
 
+    
         // --- 8. Render Loop ---
         function animate() {
             requestAnimationFrame(animate);
