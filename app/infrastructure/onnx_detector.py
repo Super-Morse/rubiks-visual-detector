@@ -1,8 +1,8 @@
+from dataclasses import dataclass
 from pathlib import Path
-
-import cv2
+import cv2  # type: ignore[import-untyped]
 import numpy as np
-import onnxruntime as ort
+import onnxruntime as ort  # type: ignore[import-untyped]
 
 from app.domain.interfaces import IFaceDetector
 from app.domain.models import BoundingBox, Color, DetectedSticker, FaceScanResult
@@ -15,6 +15,15 @@ CLASS_TO_COLOR: dict[int, Color] = {
     4: Color.RED,
     5: Color.ORANGE,
 }
+
+
+@dataclass
+class _Candidate:
+    box: list[float]
+    score: float
+    class_id: int
+    cx: float
+    cy: float
 
 
 class YoloOnnxFaceDetector(IFaceDetector):
@@ -32,9 +41,7 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         session_options = ort.SessionOptions()
         session_options.intra_op_num_threads = 2
-        session_options.graph_optimization_level = (
-            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        )
+        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
         self.session = ort.InferenceSession(
             str(model_file),
@@ -67,15 +74,10 @@ class YoloOnnxFaceDetector(IFaceDetector):
         )
 
         if len(boxes) < 9:
-            return FaceScanResult(
-                stickers=[],
-                details=[],
-                center_color=None,
-                is_valid_face=False,
-                message=f"Searching for cube face: detected {len(boxes)}/9 stickers",
+            raise RuntimeError(
+                f"Detection failed: expected at least 9 stickers, but detected {len(boxes)}."
             )
 
-        # Select the 9 stickers belonging strictly to the primary face
         selected_boxes, selected_scores, selected_classes = self._cluster_face_stickers(
             boxes=boxes,
             scores=scores,
@@ -96,7 +98,6 @@ class YoloOnnxFaceDetector(IFaceDetector):
             details=sorted_stickers,
             center_color=center_color,
             is_valid_face=True,
-            message="Face detected successfully",
         )
 
     def _cluster_face_stickers(
@@ -105,14 +106,12 @@ class YoloOnnxFaceDetector(IFaceDetector):
         scores: list[float],
         classes: list[int],
     ) -> tuple[list[list[float]], list[float], list[int]]:
-        """Isolates the 9 stickers of the central face by finding the densest cluster."""
         if len(boxes) == 9:
             return boxes, scores, classes
 
         centers = np.array([[(b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0] for b in boxes])
         median_center = np.median(centers, axis=0)
 
-        # Distances to the collective center-of-mass
         dists = np.linalg.norm(centers - median_center, axis=1)
         top9_indices = np.argsort(dists)[:9]
 
@@ -128,39 +127,38 @@ class YoloOnnxFaceDetector(IFaceDetector):
         scores: list[float],
         classes: list[int],
     ) -> list[DetectedSticker]:
-        """Arranges 9 bounding boxes into row-major 3x3 order (indices 0..8)."""
-        items = []
+        candidates: list[_Candidate] = []
         for i in range(len(boxes)):
             box = boxes[i]
             cy = (box[1] + box[3]) / 2.0
             cx = (box[0] + box[2]) / 2.0
-            items.append(
-                {
-                    "box": box,
-                    "score": scores[i],
-                    "class_id": classes[i],
-                    "cx": cx,
-                    "cy": cy,
-                }
+            candidates.append(
+                _Candidate(
+                    box=box,
+                    score=float(scores[i]),
+                    class_id=int(classes[i]),
+                    cx=cx,
+                    cy=cy,
+                )
             )
 
         # Sort top to bottom
-        items.sort(key=lambda it: it["cy"])
+        candidates.sort(key=lambda it: it.cy)
 
-        # Split into 3 horizontal bands
-        row1 = sorted(items[0:3], key=lambda it: it["cx"])
-        row2 = sorted(items[3:6], key=lambda it: it["cx"])
-        row3 = sorted(items[6:9], key=lambda it: it["cx"])
+        # Split into 3 horizontal rows
+        row1 = sorted(candidates[0:3], key=lambda it: it.cx)
+        row2 = sorted(candidates[3:6], key=lambda it: it.cx)
+        row3 = sorted(candidates[6:9], key=lambda it: it.cx)
 
         sorted_items = row1 + row2 + row3
         result: list[DetectedSticker] = []
 
         for idx, it in enumerate(sorted_items):
-            b = it["box"]
+            b = it.box
             result.append(
                 DetectedSticker(
-                    color=CLASS_TO_COLOR[it["class_id"]],
-                    confidence=round(it["score"], 4),
+                    color=CLASS_TO_COLOR[it.class_id],
+                    confidence=round(it.score, 4),
                     box=BoundingBox(
                         x_min=round(b[0], 2),
                         y_min=round(b[1], 2),
@@ -185,9 +183,7 @@ class YoloOnnxFaceDetector(IFaceDetector):
 
         pad_w = (target_size - new_w) / 2
         pad_h = (target_size - new_h) / 2
-        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = (
-            resized
-        )
+        canvas[int(pad_h) : int(pad_h) + new_h, int(pad_w) : int(pad_w) + new_w] = resized
 
         rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         tensor = rgb.astype(np.float32) / 255.0
@@ -239,7 +235,8 @@ class YoloOnnxFaceDetector(IFaceDetector):
         final_classes: list[int] = []
 
         if len(indices) > 0:
-            for idx in indices.flatten():
+            flat_indices: list[int] = [int(x) for x in np.array(indices).reshape(-1)]
+            for idx in flat_indices:
                 x1, y1, bw, bh = cv_boxes[idx]
                 orig_x1 = (x1 - pad_w) / scale
                 orig_y1 = (y1 - pad_h) / scale
