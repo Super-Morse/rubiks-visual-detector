@@ -1,8 +1,9 @@
 # 🧩 Rubik's Visual Detector
 
-<p align="center">
-  <strong>Computer Vision microservice for automated Rubik's Cube state recognition from images.</strong>
-</p>
+An end-to-end Computer Vision system and interactive 3D solver. Powered by a custom-trained **YOLO11** neural network running on **ONNX Runtime (CPU)**, a high-performance **Go (WebAssembly)** Kociemba solver, and hardware-accelerated **Three.js** WebGL rendering.
+
+🚀 **Live Web App:** [https://your-detector-demo.hf.space](https://your-detector-demo.hf.space) *(or local `http://localhost:8000`)*  
+🔗 **Companion Solver:** [https://super-morse.github.io/rubiks-solver/](https://super-morse.github.io/rubiks-solver/)
 
 <p align="center">
   <!-- CI/CD & SonarCloud Badges -->
@@ -22,122 +23,194 @@
     <img src="https://sonarcloud.io/api/project_badges/measure?project=Super-Morse_rubiks-visual-detector&metric=code_smells" alt="Code Smells" />
   </a>
   <br />
-<!-- Tech Stack Badges -->
+  <!-- Tech Stack Badges -->
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11+" />
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/YOLO11-Ultralytics-00D4AA?style=flat&logo=yolo&logoColor=black" alt="YOLO11" />
   <img src="https://img.shields.io/badge/ONNX-Runtime-005CED?style=flat&logo=onnx&logoColor=white" alt="ONNX Runtime" />
-  <img src="https://img.shields.io/badge/OpenCV-Headless-5C3EE8?style=flat&logo=opencv&logoColor=white" alt="OpenCV" />
+  <img src="https://img.shields.io/badge/Go-WASM-00ADD8?style=flat&logo=go&logoColor=white" alt="Go WASM" />
+  <img src="https://img.shields.io/badge/Three.js-WebGL-black?style=flat&logo=three.js&logoColor=white" alt="Three.js" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Code%20Style-Ruff-black?style=flat" alt="Ruff" />
 </p>
 
 👉 **Live Analytics Dashboard:** [SonarCloud Project Overview](https://sonarcloud.io/project/overview?id=Super-Morse_rubiks-visual-detector)
 
 ---
 
-## 📖 Overview
+## 🧠 Polyglot Architecture & Engineering Philosophy
 
-**Rubik's Visual Detector** is a high-performance Python microservice designed to process real-world photos of a Rubik's Cube, detect the 3x3 sticker grid, accurately classify colors across varying lighting conditions, and validate the cube's physical state.
+Solving a physical Rubik's Cube with computer vision bridges the analogue world, deep learning, and discrete mathematics:
 
-This service acts as the computer vision ingestion pipeline for the [Super-Morse/rubiks-solver](https://github.com/Super-Morse/rubiks-solver) — an interactive 3D solver powered by **Go**, **WebAssembly**, and **Three.js**.
-
----
-
-## 📊 Computer Vision Model Performance (YOLO11)
-- **mAP@50:** 99.0%
-- **Inference Latency:** 15ms (CPU headless)
-- **Model Size:** 5.5 MB (ONNX format)
-
-![YOLO11 Metrics](docs/assets/yolo_metrics.png)
+* **Computer Vision at the Edge:** Real-world cubes suffer from reflections, motion blur, and uneven lighting. Instead of brittle classical RGB/HSV heuristics, a custom **YOLO11 nano** model detects and classifies stickers simultaneously in **~15 ms** on commodity CPUs.
+* **Sim-to-Real Data Pipeline:** Trained on a unified dataset combining a custom Three.js synthetic generator with augmented real-world camera captures.
+* **Zero-Latency In-Browser Solving:** Rather than round-tripping heavy solve computations over HTTP, the verified 54-facelet state is solved client-side by an embedded **Go WebAssembly (WASM)** Kociemba Two-Phase engine in **~30 ms**.
+* **Clean Architecture & TDD:** Complete separation between CV preprocessing, domain validation, and presentation layers with deterministic test coverage.
 
 ---
 
-## 🛠️ Architecture & Engineering Standards
+## 📊 Code Quality & SonarCloud Metrics
 
-The codebase strictly adheres to **Clean Architecture** and **SOLID** principles:
+<div align="center">
+  <a href="https://sonarcloud.io/project/overview?id=Super-Morse_rubiks-visual-detector" target="_blank">
+    <img src="docs/assets/sonar-metrix.png" alt="SonarCloud Quality Gate Dashboard" width="100%" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); margin-bottom: 15px;"/>
+  </a>
+</div>
+
+| Metric | Status / Value | Description |
+|---|---|---|
+| **🔒 Security** | **A (0 Issues)** | Zero vulnerabilities, non-root Docker execution, safe payload streaming. |
+| **🛡️ Reliability** | **A (0 Bugs)** | Strict Pydantic contracts and fail-safe CV inference loops. |
+| **🧹 Maintainability** | **A (0 Debt)** | Clean Architecture, SOLID principles, type-hinted Python 3.11+. |
+| **🎯 Test Coverage** | **98.5%+** | Deterministic unit and integration test suites (Classic TDD). |
+| **👥 Duplications** | **0.0%** | Zero code repetition across domain, services, and API layers. |
+
+---
+
+## 📸 Demo & Interface
+
+<details open>
+<summary><b>Click to expand interactive animations & videos</b></summary>
+<br>
+
+<div align="center">
+  <table border="0" cellspacing="10" cellpadding="0">
+    <tr>
+      <td align="center" valign="top" width="60%">
+        <b>🖥️ Desktop Live Scanner & Solver</b><br><br>
+        <img src="docs/assets/desktop-demo.gif" alt="Desktop Web Demo" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"/>
+      </td>
+      <td align="center" valign="top" width="35%">
+        <b>📱 Mobile View (50/50 Split)</b><br><br>
+        <img src="docs/assets/mobile-demo.gif" alt="Mobile Web Demo" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<br>
+
+<div align="center">
+  <table border="0" cellspacing="10" cellpadding="0">
+    <tr>
+      <td align="center" valign="top" width="50%">
+        <b>📺 Desktop Walkthrough</b><br><br>
+        <a href="https://www.youtube.com/watch?v=YOUR_DESKTOP_VIDEO_ID" target="_blank">
+          <img src="https://img.youtube.com/vi/YOUR_DESKTOP_VIDEO_ID/maxresdefault.jpg" alt="Desktop Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+        </a>
+      </td>
+      <td align="center" valign="top" width="50%">
+        <b>📱 Mobile Real Device Test</b><br><br>
+        <a href="https://www.youtube.com/watch?v=YOUR_MOBILE_VIDEO_ID" target="_blank">
+          <img src="https://img.youtube.com/vi/YOUR_MOBILE_VIDEO_ID/maxresdefault.jpg" alt="Mobile Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</details>
+
+---
+
+## 🎯 Computer Vision Model (YOLO11 Nano)
+
+The sticker detection and color classification pipeline utilizes an ultra-lightweight **YOLO11n** architecture exported to optimized ONNX format for zero-overhead CPU deployment.
+
+<div align="center">
+  <img src="docs/assets/yolo_metrics.png" alt="YOLO11 Evaluation Charts" width="90%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-top: 10px; margin-bottom: 10px;"/>
+</div>
+
+| Metric | Score / Benchmark | Note |
+|---|---|---|
+| **mAP@50** | **99.0%** | Near-perfect detection across all 6 standard WCA colors. |
+| **mAP@50-95** | **91.1%** | Robust IoU localization against camera tilt and isometric perspective. |
+| **Model Size** | **5.5 MB** | Lightweight ONNX format, checked directly into Git (no external storage needed). |
+| **CPU Latency** | **~15 ms** | Headless inference via `onnxruntime` with 2 intra-op threads. |
+
+---
+
+## ✨ Key Features
+
+- **Guided Face Scanning:** Dynamic prompts guiding the user through 6 WCA faces (`U` ➔ `R` ➔ `F` ➔ `D` ➔ `L` ➔ `B`) with target top-color indicators.
+- **Temporal Consensus Voting:** Aggregates multi-frame rolling predictions to eliminate transient camera motion blurs and single-frame lighting anomalies.
+- **Interactive Manual Corrections:** Built-in interactive 3x3 mini-grid allows instantaneous manual color cycling before locking each face.
+- **Embedded Go/Wasm Solver:** Solves the full 54-facelet state client-side using Herbert Kociemba's Two-Phase Algorithm without external API latency.
+- **Animated 3D Assembly:** Physical 26-cubie Three.js simulation animates each step of the solution (`U`, `R'`, `F2`, etc.) directly on the scanned 3D model.
+- **Responsive 50/50 Split View:** Tailored CSS Grid/Flexbox preserving exact 50% camera / 50% 3D viewports across both mobile devices and wide desktop displays.
+
+---
+
+## 🛠️ Technical Stack & Architecture
 
 ```text
-rubiks-visual-detector/
-├── app/
-│   ├── api/                 # Presentation layer (FastAPI routes & schemas)
-│   ├── core/                # Application configurations & settings
-│   ├── domain/              # Business entities, Enums, and Abstract Interfaces
-│   ├── infrastructure/      # OpenCV image processing, contour detection & color classifiers
-│   └── services/            # Use cases orchestrating domain & infrastructure logic
-└── tests/                   # Deterministic test suites (Classic TDD)
+       ┌────────────────────────┐
+       │   Camera / Web UI      │ ◄─── HTML5 Video • Three.js 3D View
+       └───────────┬────────────┘
+                   │
+                   ▼ (HTTP POST Multipart Image)
+       ┌────────────────────────┐
+       │ FastAPI + ONNX Runtime │ ◄─── YOLO11n (15ms CPU Headless Inference)
+       └───────────┬────────────┘
+                   │
+                   ▼ (Validated 54-Char Facelet String)
+       ┌────────────────────────┐
+       │   WebAssembly (WASM)   │ ◄─── Go Kociemba Two-Phase Engine
+       └───────────┬────────────┘
+                   │
+                   ▼ (Optimal Solution Move Sequence)
+       ┌────────────────────────┐
+       │  3D Layer Animation    │ ◄─── 26 Physical Cubies Rotations
+       └────────────────────────┘
 ```
 
-### Key Engineering Highlights:
-
-* **SOLID Compliance**: Low coupling achieved via Dependency Inversion (`IColorClassifier`, `IGridDetector` abstractions).
-* **Test-Driven Development (TDD)**: Developed using the classical (Detroit) school of TDD without fragile mocks. Uses synthetic NumPy pixel buffers and deterministic image fixtures.
-* **Perceptual Color Science**: Classifies sticker colors using **CIELAB Delta-E (CIE2000)** and clustering instead of brittle RGB/HSV hardcoded ranges, making it robust against shadows and ambient light variations.
-* **Continuous Quality**: Integrated with **SonarCloud** and **GitHub Actions** checking coverage, cognitive complexity, and security vulnerabilities on every push.
+- **Backend Microservice:** Python 3.11+, FastAPI, Uvicorn, OpenCV-headless
+- **Neural Inference Engine:** ONNX Runtime (CPU execution provider)
+- **Mathematical Solver:** Go (Golang) compiled to WebAssembly (`GOOS=js GOARCH=wasm`)
+- **3D Visualization:** Three.js (WebGL), OrbitControls, Web Audio API
+- **Quality & DevOps:** Docker, Docker Compose, Pytest, Ruff, Mypy, SonarCloud CI
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker)
 
-### Option 1: Running with Docker (Recommended)
-
-The project includes an optimized multi-layer Docker setup using a non-root user:
+The fastest and most reliable way to run the entire service locally:
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/Super-Morse/rubiks-visual-detector.git
 cd rubiks-visual-detector
 
-# Spin up the service
+# 2. Build and run using Docker Compose
 docker compose up --build
 ```
 
-The API will be available at:
-* **Interactive Docs (Swagger UI):** [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Alternative Docs (ReDoc):** [http://localhost:8000/redoc](http://localhost:8000/redoc)
-* **Health Check:** [http://localhost:8000/health](http://localhost:8000/health)
+Access the application in your browser:
+* **Live App & Scanner:** [http://localhost:8000](http://localhost:8000)
+* **Interactive API Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check Endpoint:** [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
-### Option 2: Local Development
+## 🧪 Testing & Verification
+
+Strict adherence to Test-Driven Development (TDD) ensures mathematically sound cube states and robust computer vision fallback handling:
 
 ```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Run pytest with code coverage tracking
+docker compose exec detector-api pytest
 
-# Install dependencies
-pip install -r requirements-dev.txt
+# Run Ruff linter and style check
+docker compose exec detector-api ruff check .
 
-# Start the dev server
-uvicorn app.main:app --reload --port 8000
-```
-
----
-
-## 🧪 Testing & Code Quality
-
-Run tests, coverage reports, and linters with ease:
-
-```bash
-# Run unit & integration tests with coverage report
-pytest
-
-# Format code according to PEP 8 using Ruff
-ruff format .
-
-# Fast linting and auto-fix
-ruff check --fix .
-
-# Static type analysis
-mypy app/
+# Run static type analysis
+docker compose exec detector-api mypy app/
 ```
 
 ---
 
 ## 🔗 Related Projects
 
-* **[rubiks-solver](https://github.com/Super-Morse/rubiks-solver)** — The client-side Rubik's Cube solver utilizing Go (Kociemba two-phase algorithm) compiled to WebAssembly with Three.js rendering.
+* **[rubiks-solver](https://github.com/Super-Morse/rubiks-solver)** — Standalone WebAssembly Rubik's cube solver with 100% test coverage and interactive 3D scrambler.
 
 ---
 
