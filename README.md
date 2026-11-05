@@ -1,4 +1,4 @@
-# 🧩 Rubik's Visual Detector
+# 🧩 Rubik's Visual Detector & Solver
 
 An end-to-end Computer Vision system and interactive 3D solver. Powered by a custom-trained **YOLO11** neural network running on **ONNX Runtime (CPU)**, a high-performance **Go (WebAssembly)** Kociemba solver, and hardware-accelerated **Three.js** WebGL rendering.
 
