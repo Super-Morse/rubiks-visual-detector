@@ -1163,12 +1163,8 @@
                         document.getElementById('kociemba-display').innerText = result || data.kociemba_string;
                         alert("Solver output: " + result);
                     }
-                    
-                    // 6. Play Solution Animation on the 3D Cube
-                    const solveBtn = document.getElementById('go-to-solver-btn');
-                    solveBtn.innerText = "▶ Solve Cube";
-                    solveBtn.disabled = false;
 
+                    // 6. Play Solution Animation on the 3D Cube
                     solveBtn.onclick = () => {
                         if (!solutionMoves.length || isAutoSolving) return;
 
