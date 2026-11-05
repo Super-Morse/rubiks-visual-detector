@@ -2,7 +2,7 @@
 
 An end-to-end Computer Vision system and interactive 3D solver. Powered by a custom-trained **YOLO11** neural network running on **ONNX Runtime (CPU)**, a high-performance **Go (WebAssembly)** Kociemba solver, and hardware-accelerated **Three.js** WebGL rendering.
 
-🚀 **Live Web App:** [https://rubiks-visual-detector-and-solver.onrender.com/](https://rubiks-visual-detector-and-solver.onrender.com/ *(or local `http://localhost:8000`)*  
+🚀 **Live Web App:** https://rubiks-visual-detector-and-solver.onrender.com
 🔗 **Companion Solver:** [https://super-morse.github.io/rubiks-solver/](https://super-morse.github.io/rubiks-solver/)
 
 <p align="center">
