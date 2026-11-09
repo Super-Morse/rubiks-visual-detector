@@ -84,7 +84,7 @@ class YoloOnnxFaceDetector(IFaceDetector):
                 is_valid_face=False,
                 message=f"Searching for cube face: expected 9 stickers, found {len(boxes)}..",
             )
-        
+
         selected_boxes, selected_scores, selected_classes = self._cluster_face_stickers(
             boxes=boxes,
             scores=scores,
