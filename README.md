@@ -136,6 +136,7 @@ The sticker detection and color classification pipeline utilizes an ultra-lightw
 - **Temporal Consensus Voting:** Aggregates multi-frame rolling predictions to eliminate transient camera motion blurs and single-frame lighting anomalies.
 - **Interactive Manual Corrections:** Built-in interactive 3x3 mini-grid allows instantaneous manual color cycling before locking each face.
 - **Embedded Go/Wasm Solver:** Solves the full 54-facelet state client-side using Herbert Kociemba's Two-Phase Algorithm without external API latency.
+- **Physical Solvability Check:** Before solving, the WASM engine verifies the cube is physically reachable (corner twist, edge flip, and permutation parity), catching misdetected stickers that pass the simple color-count check.
 - **Animated 3D Assembly:** Physical 26-cubie Three.js simulation animates each step of the solution (`U`, `R'`, `F2`, etc.) directly on the scanned 3D model.
 - **Responsive 50/50 Split View:** Tailored CSS Grid/Flexbox preserving exact 50% camera / 50% 3D viewports across both mobile devices and wide desktop displays.
 
@@ -211,7 +212,7 @@ docker compose exec detector-api mypy app/
 
 ## 🔗 Related Projects
 
-* **[rubiks-solver](https://github.com/Super-Morse/rubiks-solver)** — Standalone WebAssembly Rubik's cube solver with 100% test coverage and interactive 3D scrambler.
+* **[rubiks-solver](https://github.com/Super-Morse/rubiks-solver)** — Standalone WebAssembly Rubik's cube solver with physical cube validation, 100% test coverage and interactive 3D scrambler.
 
 ---
 
