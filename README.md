@@ -62,7 +62,7 @@ Solving a physical Rubik's Cube with computer vision bridges the analogue world,
 | **🔒 Security** | **A (0 Issues)** | Zero vulnerabilities, non-root Docker execution, safe payload streaming. |
 | **🛡️ Reliability** | **A (0 Bugs)** | Strict Pydantic contracts and fail-safe CV inference loops. |
 | **🧹 Maintainability** | **A (0 Debt)** | Clean Architecture, SOLID principles, type-hinted Python 3.11+. |
-| **🎯 Test Coverage** | **98.5%+** | Deterministic unit and integration test suites (Classic TDD). |
+| **🎯 Test Coverage** | **100%** | Deterministic unit and integration test suites (Classic TDD). |
 | **👥 Duplications** | **0.0%** | Zero code repetition across domain, services, and API layers. |
 
 ---
@@ -125,7 +125,7 @@ The sticker detection and color classification pipeline utilizes an ultra-lightw
 |---|---|---|
 | **mAP@50** | **99.0%** | Near-perfect detection across all 6 standard WCA colors. |
 | **mAP@50-95** | **91.1%** | Robust IoU localization against camera tilt and isometric perspective. |
-| **Model Size** | **5.5 MB** | Lightweight ONNX format, checked directly into Git (no external storage needed). |
+| **Model Size** | **~10.7 MB** | Lightweight ONNX format, checked directly into Git (no external storage needed). |
 | **CPU Latency** | **~15 ms** | Headless inference via `onnxruntime` with 2 intra-op threads. |
 
 ---
@@ -152,9 +152,9 @@ The sticker detection and color classification pipeline utilizes an ultra-lightw
                    ▼ (HTTP POST Multipart Image)
        ┌────────────────────────┐
        │ FastAPI + ONNX Runtime │ ◄─── YOLO11n (15ms CPU Headless Inference)
-       └───────────┬────────────┘
+       └───────────┬────────────┘      + Cube Validation (/validate-cube)
                    │
-                   ▼ (Validated 54-Char Facelet String)
+                   ▼ (54-Char Facelet String back to the browser)
        ┌────────────────────────┐
        │   WebAssembly (WASM)   │ ◄─── Go Kociemba Two-Phase Engine
        └───────────┬────────────┘
