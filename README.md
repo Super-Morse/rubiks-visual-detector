@@ -94,15 +94,15 @@ Solving a physical Rubik's Cube with computer vision bridges the analogue world,
   <table border="0" cellspacing="10" cellpadding="0">
     <tr>
       <td align="center" valign="top" width="50%">
-        <b>📺 Desktop Walkthrough</b><br><br>
+        <b>📺 Desktop Video</b><br><br>
         <a href="https://www.youtube.com/watch?v=CajwCf2MvbE" target="_blank">
-          <img src="https://img.youtube.com/vi/CajwCf2MvbE/maxresdefault.jpg" alt="Desktop Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+          <img src="https://img.youtube.com/vi/CajwCf2MvbE/maxresdefault.jpg" alt="Desktop Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
         </a>
       </td>
       <td align="center" valign="top" width="50%">
         <b>📱 Mobile Real Device Test</b><br><br>
         <a href="https://www.youtube.com/shorts/MdTX8jiIG5g" target="_blank">
-          <img src="https://img.youtube.com/vi/MdTX8jiIG5g/maxresdefault.jpg" alt="Mobile Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+          <img src="https://img.youtube.com/vi/MdTX8jiIG5g/maxresdefault.jpg" alt="Mobile Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
         </a>
       </td>
     </tr>
