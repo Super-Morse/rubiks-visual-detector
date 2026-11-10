@@ -95,14 +95,14 @@ Solving a physical Rubik's Cube with computer vision bridges the analogue world,
     <tr>
       <td align="center" valign="top" width="50%">
         <b>📺 Desktop Walkthrough</b><br><br>
-        <a href="https://www.youtube.com/watch?v=YOUR_DESKTOP_VIDEO_ID" target="_blank">
-          <img src="https://img.youtube.com/vi/YOUR_DESKTOP_VIDEO_ID/maxresdefault.jpg" alt="Desktop Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+        <a href="https://www.youtube.com/watch?v=CajwCf2MvbE" target="_blank">
+          <img src="https://img.youtube.com/vi/CajwCf2MvbE/maxresdefault.jpg" alt="Desktop Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
         </a>
       </td>
       <td align="center" valign="top" width="50%">
         <b>📱 Mobile Real Device Test</b><br><br>
-        <a href="https://www.youtube.com/watch?v=YOUR_MOBILE_VIDEO_ID" target="_blank">
-          <img src="https://img.youtube.com/vi/YOUR_MOBILE_VIDEO_ID/maxresdefault.jpg" alt="Mobile Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
+        <a href="https://www.youtube.com/shorts/MdTX8jiIG5g" target="_blank">
+          <img src="https://img.youtube.com/vi/MdTX8jiIG5g/maxresdefault.jpg" alt="Mobile Walkthrough Video" width="100%" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);"/>
         </a>
       </td>
     </tr>
