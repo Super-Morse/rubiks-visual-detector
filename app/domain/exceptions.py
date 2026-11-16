@@ -2,10 +2,6 @@ class CubeDomainError(Exception):
     """Base exception for Rubik's cube domain errors."""
 
 
-class InvalidFaceletCountError(CubeDomainError):
-    """Raised when the total number of stickers on the cube is not 54."""
-
-
 class InvalidColorDistributionError(CubeDomainError):
     """Raised when any color does not appear exactly 9 times."""
 

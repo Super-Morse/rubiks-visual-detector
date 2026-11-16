@@ -41,7 +41,6 @@ def client_with_mock_detector():
     mock_det = MockFaceDetector()
     app.dependency_overrides[get_face_detector] = lambda: mock_det
     app.dependency_overrides[get_cube_service] = lambda: CubeScannerService(
-        detector=mock_det,
         validator=StandardCubeValidator(),
     )
     with TestClient(app) as test_client:

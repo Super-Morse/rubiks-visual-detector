@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.domain.models import Color, FacePosition, FaceScanResult
+from app.domain.models import Color, FacePosition
 
 
 class FacePayload(BaseModel):
@@ -23,11 +23,3 @@ class CubeValidationSuccess(BaseModel):
     kociemba_string: str = Field(..., min_length=54, max_length=54)
     detected_faces: dict[FacePosition, list[Color]]
     message: str = "Cube is structurally valid and ready for solver."
-
-
-class FullScanResponse(BaseModel):
-    """Response returned when scanning all 6 face images in batch."""
-
-    is_valid: bool
-    kociemba_string: str
-    face_scans: dict[FacePosition, FaceScanResult]

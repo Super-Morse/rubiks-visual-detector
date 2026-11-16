@@ -21,16 +21,6 @@ class FacePosition(StrEnum):
     B = "B"  # Back (Standard: Blue)
 
 
-DEFAULT_COLOR_TO_FACE: dict[Color, FacePosition] = {
-    Color.WHITE: FacePosition.U,
-    Color.RED: FacePosition.R,
-    Color.GREEN: FacePosition.F,
-    Color.YELLOW: FacePosition.D,
-    Color.ORANGE: FacePosition.L,
-    Color.BLUE: FacePosition.B,
-}
-
-
 class BoundingBox(BaseModel):
     x_min: float
     y_min: float
@@ -75,16 +65,12 @@ class CubeState(BaseModel):
 
     faces: dict[FacePosition, FaceState]
 
-    def to_kociemba_string(
-        self,
-        color_mapping: dict[Color, FacePosition] | None = None,
-    ) -> str:
+    def to_kociemba_string(self) -> str:
         """Converts 54 stickers to a standard 54-char Kociemba notation string."""
-        if color_mapping is None:
-            color_mapping = {
-                face_state.center_color: face_pos
-                for face_pos, face_state in self.faces.items()
-            }
+        color_mapping = {
+            face_state.center_color: face_pos
+            for face_pos, face_state in self.faces.items()
+        }
 
         order = [
             FacePosition.U,

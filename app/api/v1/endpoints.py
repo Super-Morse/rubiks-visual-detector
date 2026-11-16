@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from app.api.deps import get_cube_service, get_face_detector
-from app.api.schemas import CubeValidationSuccess, FullScanResponse, ValidateCubeRequest
+from app.api.schemas import CubeValidationSuccess, ValidateCubeRequest
 from app.domain.exceptions import CubeDomainError
 from app.domain.interfaces import IFaceDetector
 from app.domain.models import FaceScanResult, FaceState
@@ -72,51 +72,4 @@ async def validate_cube(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
-        ) from None
-
-
-@router.post(
-    "/scan-cube",
-    response_model=FullScanResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Batch scan 6 cube photos",
-    description="Accepts 6 face images, detects stickers, resolves faces by center color, and validates the cube.",
-)
-async def scan_full_cube(
-    files: list[UploadFile] = File(...),
-    service: CubeScannerService = Depends(get_cube_service),
-) -> FullScanResponse:
-    if len(files) != 6:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Exactly 6 images are required, received {len(files)}.",
-        )
-
-    images_bytes: list[bytes] = []
-    for file in files:
-        if not file.content_type or not file.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File {file.filename} is not a valid image.",
-            )
-        images_bytes.append(await file.read())
-
-    try:
-        cube_state, scan_details = service.process_six_images(images_bytes)
-        kociemba = cube_state.to_kociemba_string()
-
-        return FullScanResponse(
-            is_valid=True,
-            kociemba_string=kociemba,
-            face_scans=scan_details,
-        )
-    except (CubeDomainError, ValueError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(exc),
-        ) from None
-    except RuntimeError as run_err:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(run_err),
         ) from None

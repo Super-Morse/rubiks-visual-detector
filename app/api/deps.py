@@ -19,8 +19,5 @@ def get_cube_validator() -> ICubeValidator:
 
 
 def get_cube_service() -> CubeScannerService:
-    """Factory dependency providing CubeScannerService with injected components."""
-    return CubeScannerService(
-        detector=get_face_detector(),
-        validator=get_cube_validator(),
-    )
+    """Factory dependency providing CubeScannerService with injected validator."""
+    return CubeScannerService(validator=get_cube_validator())

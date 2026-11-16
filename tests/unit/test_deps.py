@@ -35,21 +35,9 @@ def test_get_face_detector_returns_singleton(monkeypatch):
         get_face_detector.cache_clear()
 
 
-def test_get_cube_service_wires_dependencies(monkeypatch):
-    """Validates that get_cube_service injects detector and validator into CubeScannerService."""
+def test_get_cube_service_wires_dependencies():
+    """Validates that get_cube_service injects the validator into CubeScannerService."""
+    service = get_cube_service()
 
-    class DummyDetector(IFaceDetector):
-        def detect(self, image_bytes: bytes):
-            pass
-
-    get_face_detector.cache_clear()
-    monkeypatch.setattr("app.api.deps.YoloOnnxFaceDetector", DummyDetector)
-
-    try:
-        service = get_cube_service()
-
-        assert isinstance(service, CubeScannerService)
-        assert isinstance(service._detector, DummyDetector)
-        assert isinstance(service._validator, StandardCubeValidator)
-    finally:
-        get_face_detector.cache_clear()
+    assert isinstance(service, CubeScannerService)
+    assert isinstance(service._validator, StandardCubeValidator)
