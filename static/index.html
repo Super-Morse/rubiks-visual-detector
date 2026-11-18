@@ -996,7 +996,7 @@
             }
         }
 
-        setInterval(scanFrame, 220);
+        const scanTimer = setInterval(scanFrame, 220);
 
         function updateStepHeader(stepIdx) {
             const step = STEPS[stepIdx];
@@ -1082,6 +1082,7 @@
             const bottomPanel = document.getElementById('bottom-panel-container');
             if (bottomPanel) bottomPanel.style.display = 'none';
 
+            clearInterval(scanTimer);
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
             }
