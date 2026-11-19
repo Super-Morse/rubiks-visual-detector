@@ -6,6 +6,8 @@ An end-to-end Computer Vision system and interactive 3D solver. Powered by a cus
 
 🔗 **Companion Solver:** [https://super-morse.github.io/rubiks-solver](https://super-morse.github.io/rubiks-solver)
 
+📘 **Study Guide (Ukrainian):** [Rubik's Visual Detector зсередини](https://super-morse.github.io/rubiks-visual-detector/learn.html) — the architecture, the API and the code explained step by step for students.
+
 <p align="center">
   <!-- CI/CD & SonarCloud Badges -->
   <a href="https://github.com/Super-Morse/rubiks-visual-detector/actions/workflows/sonarcloud.yml">

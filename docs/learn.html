@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rubik's Visual Detector зсередини · навчальний матеріал</title>
+<meta name="description" content="Навчальний розбір проєкту Rubik's Visual Detector: з яких частин складається застосунок, які запити ходять між браузером і сервером, як працюють нейромережа, перевірка кубика й солвер у браузері.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314171c'/%3E%3Crect x='3' y='3' width='8' height='8' rx='1.5' fill='%23ffffff'/%3E%3Crect x='12' y='3' width='8' height='8' rx='1.5' fill='%23b71234'/%3E%3Crect x='21' y='3' width='8' height='8' rx='1.5' fill='%23009b48'/%3E%3Crect x='3' y='12' width='8' height='8' rx='1.5' fill='%23ff5800'/%3E%3Crect x='12' y='12' width='8' height='8' rx='1.5' fill='%23ffd500'/%3E%3Crect x='21' y='12' width='8' height='8' rx='1.5' fill='%230046ad'/%3E%3Crect x='3' y='21' width='8' height='8' rx='1.5' fill='%23009b48'/%3E%3Crect x='12' y='21' width='8' height='8' rx='1.5' fill='%230046ad'/%3E%3Crect x='21' y='21' width='8' height='8' rx='1.5' fill='%23ffffff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Unbounded:wght@500;700&display=swap">
+<style>
+  /* Layout: sticky table of contents on the left, one reading column on the right; stacks into one column on phones.
+     Color: cool neutrals; four role hues taken from the cube itself mark browser, server, model and solver. */
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #eceff4;
+    --fg: #1a1e26;
+    --muted: #586273;
+    --line: #d8dde5;
+    --accent: #1d5bd6;
+    --front: #1d5bd6;
+    --back: #0b7d46;
+    --model: #c94f0a;
+    --solver: #b0163a;
+    --front-soft: #e4ecfc;
+    --back-soft: #def2e7;
+    --model-soft: #fbe9dc;
+    --solver-soft: #f9e2e7;
+    --ok: #0b7d46;
+    --warn: #a86400;
+    --err: #b0163a;
+    --st-white: #ffffff;
+    --st-yellow: #ffd500;
+    --st-green: #009b48;
+    --st-blue: #0046ad;
+    --st-red: #b71234;
+    --st-orange: #ff5800;
+    --st-ink-dark: #14171c;
+    --st-ink-light: #ffffff;
+    --st-edge: #14171c;
+    --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1116;
+      --surface: #151a21;
+      --surface-2: #1c222b;
+      --fg: #e4e8ee;
+      --muted: #9ba5b5;
+      --line: #2a313c;
+      --accent: #7ea9ff;
+      --front: #7ea9ff;
+      --back: #4ccb8a;
+      --model: #ff9659;
+      --solver: #ff7a93;
+      --front-soft: #172238;
+      --back-soft: #12291d;
+      --model-soft: #2e1d12;
+      --solver-soft: #2d161d;
+      --ok: #4ccb8a;
+      --warn: #f0b45a;
+      --err: #ff7a93;
+      --st-edge: #000000;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1116;
+    --surface: #151a21;
+    --surface-2: #1c222b;
+    --fg: #e4e8ee;
+    --muted: #9ba5b5;
+    --line: #2a313c;
+    --accent: #7ea9ff;
+    --front: #7ea9ff;
+    --back: #4ccb8a;
+    --model: #ff9659;
+    --solver: #ff7a93;
+    --front-soft: #172238;
+    --back-soft: #12291d;
+    --model-soft: #2e1d12;
+    --solver-soft: #2d161d;
+    --ok: #4ccb8a;
+    --warn: #f0b45a;
+    --err: #ff7a93;
+    --st-edge: #000000;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px 64px;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 800px);
+    gap: 56px;
+    justify-content: center;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  .toc {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 28px);
+    align-self: start;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    font-size: 14px;
+  }
+  .toc-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: var(--fg);
+    text-decoration: none;
+  }
+  .toc a::before { content: counter(toc, decimal-leading-zero); color: var(--muted); font-family: var(--font-mono); font-size: 12px; padding-top: 2px; }
+  .toc a:hover { background: var(--surface-2); }
+
+  main { min-width: 0; }
+  section { scroll-margin-top: 24px; padding-top: 8px; margin-top: 56px; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: 0; margin-top: 40px; }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  h1, h2 { font-family: var(--font-display); text-wrap: balance; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(1.7rem, 4.6vw, 2.5rem); line-height: 1.15; font-weight: 700; margin: 0 0 18px; }
+  h2 { font-size: clamp(1.25rem, 3vw, 1.55rem); line-height: 1.25; font-weight: 500; margin: 24px 0 14px; }
+  h3 { font-size: 1.12rem; font-weight: 600; margin: 34px 0 10px; text-wrap: balance; }
+  h4 { font-size: 1rem; font-weight: 600; margin: 24px 0 8px; }
+  p, li { max-width: 70ch; }
+  p { margin: 0 0 14px; }
+  .lead { font-size: 1.12rem; color: var(--fg); max-width: 62ch; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  code, pre, kbd { font-family: var(--font-mono); }
+  :not(pre) > code {
+    font-size: 0.88em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    overflow-wrap: anywhere;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 6px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    white-space: nowrap;
+  }
+  .chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .chip.front { color: var(--front); }
+  .chip.back { color: var(--back); }
+  .chip.model { color: var(--model); }
+  .chip.solver { color: var(--solver); }
+  .meta { font-size: 14px; color: var(--muted); margin-top: 16px; }
+
+  /* System map */
+  .sysmap { display: grid; gap: 0; margin: 24px 0 8px; }
+  .node { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--line); }
+  .node.front { background: var(--front-soft); }
+  .node.back { background: var(--back-soft); }
+  .node.model { background: var(--model-soft); }
+  .node-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 8px; }
+  .node-title { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; }
+  .node-file { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+  .node ul { margin: 0; padding-left: 18px; font-size: 15px; }
+  .node li { margin: 2px 0; }
+  .subnode {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 14.5px;
+  }
+  .subnode strong { color: var(--solver); }
+  .links { display: grid; gap: 4px; padding: 10px 0 10px 34px; position: relative; }
+  .links::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: 0;
+    border-left: 2px dashed var(--line);
+  }
+  .link { font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+  .link .dir { font-family: var(--font-mono); color: var(--muted); }
+  .link code { font-size: 13px; }
+
+  .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 26px 0; }
+  .principle { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .principle h4 { margin: 0 0 6px; font-size: 15.5px; }
+  .principle p { font-size: 14.5px; margin: 0; color: var(--muted); }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 14px 0 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface-2); white-space: nowrap; }
+  td code { white-space: nowrap; }
+  td.wrap code { white-space: normal; }
+
+  /* Code */
+  .code { margin: 12px 0 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+  .code-label {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--muted);
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    font-family: var(--font-mono);
+  }
+  .code pre { margin: 0; padding: 12px 14px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; }
+  .status { font-family: var(--font-mono); font-weight: 500; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+  .status.ok { color: var(--ok); }
+  .status.warn { color: var(--warn); }
+  .status.err { color: var(--err); }
+
+  .reaction { margin: -8px 0 22px; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
+  .reaction b { font-weight: 600; }
+
+  .callout { margin: 18px 0; padding: 14px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+  .callout .callout-label { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Call chains: a real sequence of calls, so numbered */
+  .chain { list-style: none; margin: 16px 0 22px; padding: 0; counter-reset: chain; display: grid; gap: 0; }
+  .chain > li { counter-increment: chain; position: relative; padding: 0 0 18px 44px; max-width: none; }
+  .chain > li::before {
+    content: counter(chain);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .chain > li::after { content: ""; position: absolute; left: 14px; top: 30px; bottom: 2px; border-left: 1px solid var(--line); }
+  .chain > li:last-child { padding-bottom: 0; }
+  .chain > li:last-child::after { display: none; }
+  .chain .fn { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 2px; padding-top: 2px; }
+  .chain .fn code { font-weight: 500; }
+  .chain .where { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+  .chain p { margin: 0 0 6px; }
+  .chain.front > li::before { color: var(--front); border-color: var(--front); }
+  .chain.back > li::before { color: var(--back); border-color: var(--back); }
+
+  /* Lifecycle */
+  .stages { list-style: none; margin: 18px 0; padding: 0; display: grid; gap: 12px; counter-reset: st; }
+  .stages li { counter-increment: st; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 12px; max-width: none; }
+  .stages li::before {
+    content: counter(st);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--muted);
+    line-height: 1.3;
+    grid-row: span 2;
+  }
+  .stages .stage-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-weight: 600; }
+  .stages p { margin: 0; color: var(--fg); }
+
+  .mermaid-wrap { overflow-x: auto; margin: 18px 0 8px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  pre.mermaid { margin: 0; font-family: var(--font-body); background: transparent; }
+  .caption { font-size: 13.5px; color: var(--muted); margin: 6px 0 20px; }
+
+  /* Model I/O */
+  .io { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0 18px; }
+  .io > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; }
+  .io .io-label { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .io .shape { font-family: var(--font-mono); font-size: 1.15rem; margin: 2px 0 6px; color: var(--model); }
+
+  /* Cube net */
+  .net-wrap { overflow-x: auto; margin: 18px 0 6px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .net {
+    --st: clamp(22px, 6.6vw, 34px);
+    display: grid;
+    grid-template-columns: repeat(4, calc(var(--st) * 3 + 8px));
+    grid-template-rows: repeat(3, calc(var(--st) * 3 + 8px));
+    gap: 6px;
+    width: max-content;
+    margin: 0 auto;
+  }
+  .net-face {
+    display: grid;
+    grid-template-columns: repeat(3, var(--st));
+    grid-template-rows: repeat(3, var(--st));
+    gap: 2px;
+    padding: 2px;
+    background: var(--st-edge);
+    border-radius: 6px;
+  }
+  .st {
+    border-radius: 3px;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: clamp(9px, 2.4vw, 11px);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .st b { font-family: var(--font-display); font-size: clamp(10px, 2.8vw, 13px); display: block; }
+  .st-center { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1px; }
+  .st-white { background: var(--st-white); color: var(--st-ink-dark); }
+  .st-yellow { background: var(--st-yellow); color: var(--st-ink-dark); }
+  .st-orange { background: var(--st-orange); color: var(--st-ink-dark); }
+  .st-green { background: var(--st-green); color: var(--st-ink-light); }
+  .st-blue { background: var(--st-blue); color: var(--st-ink-light); }
+  .st-red { background: var(--st-red); color: var(--st-ink-light); }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; border: 1px solid var(--st-edge); vertical-align: -1px; margin-right: 6px; }
+
+  /* Quiz */
+  .quiz { display: grid; gap: 10px; margin: 16px 0; }
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+  .quiz summary { cursor: pointer; font-weight: 500; }
+  .quiz summary::marker { color: var(--muted); }
+  .quiz details p { margin: 10px 0 0; color: var(--fg); }
+
+  dl.glossary { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: 10px 20px; margin: 16px 0; }
+  dl.glossary dt { font-weight: 600; }
+  dl.glossary dd { margin: 0; color: var(--fg); max-width: 62ch; }
+
+  footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .toc { position: static; max-height: none; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+    .toc ol { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    .principles, .io { grid-template-columns: minmax(0, 1fr); }
+    dl.glossary { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    dl.glossary dd { margin-bottom: 12px; }
+    body { padding-block: 24px 48px; }
+  }
+  /* Standalone page on GitHub Pages (no host skeleton), so reset the default body margin. */
+  body { margin: 0; }
+  .mermaid-diagram { margin-block: 4px; }
+  .mermaid-diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+</style>
+<style>
+/* Print / "Save as PDF": light theme (set by the script at the end), A4, nothing clipped, no sticky TOC. */
+@page { size: A4; margin: 14mm 12mm; }
+@media print {
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { padding-block: 0; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .toc { position: static; max-height: none; }
+  .table-wrap, .code pre, .mermaid-wrap, .net-wrap { overflow: visible; }
+  .code pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11.5px; }
+  td code { white-space: normal; }
+  .code, .callout, .reaction, .principle, details, .node, .io > div, .stages li, .chain > li { break-inside: avoid; }
+  h2, h3, h4, summary { break-after: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Зміст">
+    <p class="toc-label">Зміст</p>
+    <ol>
+      <li><a href="#map">Карта системи</a></li>
+      <li><a href="#lifecycle">Життєвий цикл</a></li>
+      <li><a href="#api">Фронтенд ↔ бекенд</a></li>
+      <li><a href="#backend">Бекенд зсередини</a></li>
+      <li><a href="#frontend">Фронтенд зсередини</a></li>
+      <li><a href="#kociemba">Рядок Kociemba</a></li>
+      <li><a href="#solver">Солвер у браузері</a></li>
+      <li><a href="#model">Звідки модель</a></li>
+      <li><a href="#run">Запуск і тести</a></li>
+      <li><a href="#quiz">Перевір себе</a></li>
+      <li><a href="#glossary">Словник</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header>
+      <p class="eyebrow">Розбір архітектури</p>
+      <h1>Rubik's Visual Detector зсередини</h1>
+      <p class="lead">Застосунок знімає кубик Рубіка камерою, розпізнає кольори стікерів нейромережею, перевіряє, що такий кубик може існувати, і показує розв'язок на 3D-моделі. Нижче крок за кроком розібрано, з яких частин він складається, які запити ходять між ними і який код виконується на кожному кроці.</p>
+      <p>Якщо часу мало, прочитайте «Карту системи» та «Життєвий цикл». Решта розділів докладно описує кожен крок, і їх зручно читати поруч із відкритим кодом.</p>
+      <div class="legend" aria-label="Кольори частин системи">
+        <span class="chip front">Браузер</span>
+        <span class="chip back">Сервер</span>
+        <span class="chip model">Модель</span>
+        <span class="chip solver">Солвер</span>
+      </div>
+      <p class="meta">Описано код гілки <code>main</code> станом на 19 листопада 2026 року · <a href="https://github.com/Super-Morse/rubiks-visual-detector" target="_blank" rel="noopener">github.com/Super-Morse/rubiks-visual-detector</a> · <a href="https://rubiks-visual-detector-and-solver.onrender.com" target="_blank" rel="noopener">жива версія</a></p>
+    </header>
+
+    <!-- 1. MAP -->
+    <section id="map">
+      <h2>Карта системи</h2>
+      <p>У застосунку три учасники. <strong>Браузер</strong> показує інтерфейс і веде весь процес. <strong>Сервер</strong> на FastAPI на прохання браузера виконує дві операції. <strong>Модель</strong> — це файл нейромережі, який сервер запускає всередині себе. Є й четверта частина, <strong>солвер</strong>: програма на Go, скомпільована у WebAssembly. Браузер завантажує її із сервера, але працює вона вже в браузері.</p>
+
+      <div class="sysmap" role="img" aria-label="Схема: браузер звертається до сервера двома POST-запитами й завантажує статику; сервер запускає модель; солвер працює всередині браузера">
+        <div class="node front">
+          <div class="node-head"><span class="node-title">Браузер</span><span class="node-file">static/index.html</span></div>
+          <ul>
+            <li>камера та AR-рамка поверх відео</li>
+            <li>увесь прогрес сканування: крок, кадри, збережені грані</li>
+            <li>міні-сітка для ручного виправлення кольорів</li>
+            <li>3D-кубик на Three.js і анімація ходів</li>
+          </ul>
+          <div class="subnode"><strong>Солвер</strong> · <code>solver.wasm</code> + <code>wasm_exec.js</code><br>Go-програма, яка за рядком із 54 літер знаходить ходи для збирання. Працює в браузері, без мережі.</div>
+        </div>
+        <div class="links">
+          <div class="link"><span class="dir">↓ ↑</span><code>GET /</code>, <code>/wasm_exec.js</code>, <code>/solver.wasm</code><span class="muted">сторінка і солвер</span></div>
+          <div class="link"><span class="dir">↓ ↑</span><code>POST /api/v1/scan-face</code><span class="muted">кадр JPEG → 9 кольорів, до ~4 разів на секунду</span></div>
+          <div class="link"><span class="dir">↓ ↑</span><code>POST /api/v1/validate-cube</code><span class="muted">6 граней → рядок Kociemba, один раз</span></div>
+        </div>
+        <div class="node back">
+          <div class="node-head"><span class="node-title">Сервер</span><span class="node-file">app/ · FastAPI + Uvicorn</span></div>
+          <ul>
+            <li>віддає сторінку та статичні файли</li>
+            <li>розпізнає грань на кадрі (OpenCV + onnxruntime)</li>
+            <li>перевіряє правила кубика й будує рядок Kociemba</li>
+            <li>нічого не пам'ятає між запитами</li>
+          </ul>
+        </div>
+        <div class="links">
+          <div class="link"><span class="dir">↓ ↑</span><code>session.run()</code><span class="muted">тензор 1×3×640×640 → 8400 кандидатів</span></div>
+        </div>
+        <div class="node model">
+          <div class="node-head"><span class="node-title">Модель</span><span class="node-file">app/infrastructure/models/best.onnx</span></div>
+          <ul>
+            <li>нейромережа YOLO11n у форматі ONNX, близько 10,7 МБ</li>
+            <li>знаходить на зображенні стікери та визначає їхній колір</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="principles">
+        <div class="principle">
+          <h4>Процесом керує браузер</h4>
+          <p>Яка грань сканується зараз, які вже збережено, що показано на екрані: усе це змінні JavaScript в index.html. Сервер про це не знає.</p>
+        </div>
+        <div class="principle">
+          <h4>Сервер нічого не пам'ятає</h4>
+          <p>Кожен запит обробляється з нуля: прийшов кадр — повернулися кольори; прийшли 6 граней — повернувся рядок. Такий сервер називають stateless.</p>
+        </div>
+        <div class="principle">
+          <h4>Розв'язок рахується в користувача</h4>
+          <p>Сервер віддає лише рядок із 54 літер. Ходи для збирання знаходить солвер у браузері за мілісекунди.</p>
+        </div>
+      </div>
+
+      <h3>Що де виконується</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Завдання</th><th>Де</th><th>Файл</th></tr></thead>
+          <tbody>
+            <tr><td>Інтерфейс, камера, AR-рамка</td><td><span class="chip front">Браузер</span></td><td><code>static/index.html</code></td></tr>
+            <tr><td>Зберігання прогресу сканування</td><td><span class="chip front">Браузер</span></td><td><code>static/index.html</code></td></tr>
+            <tr><td>Розпізнавання стікерів на кадрі</td><td><span class="chip back">Сервер</span> <span class="chip model">Модель</span></td><td><code>app/infrastructure/onnx_detector.py</code></td></tr>
+            <tr><td>Перевірка правил кубика</td><td><span class="chip back">Сервер</span></td><td><code>app/infrastructure/validators.py</code></td></tr>
+            <tr><td>Перетворення граней на рядок Kociemba</td><td><span class="chip back">Сервер</span></td><td><code>app/domain/models.py</code></td></tr>
+            <tr><td>Пошук розв'язку</td><td><span class="chip solver">Солвер</span></td><td><code>static/solver.wasm</code></td></tr>
+            <tr><td>3D-модель і анімація ходів</td><td><span class="chip front">Браузер</span></td><td><code>static/index.html</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. LIFECYCLE -->
+    <section id="lifecycle">
+      <h2>Життєвий цикл одного збирання</h2>
+      <p>Ось що відбувається від запуску сервера до анімації розв'язку. Кроки йдуть суворо по черзі; подробиці кожного кроку — у наступних розділах.</p>
+      <ol class="stages">
+        <li>
+          <span class="stage-head">Сервер стартує <span class="chip back">Сервер</span></span>
+          <p>Команда <code>uvicorn app.main:app</code> створює застосунок FastAPI, підключає маршрути API і роздачу теки <code>static/</code>. Модель поки не завантажена.</p>
+        </li>
+        <li>
+          <span class="stage-head">Користувач відкриває сторінку <span class="chip front">Браузер</span></span>
+          <p>Браузер отримує <code>index.html</code>, підвантажує Three.js, <code>wasm_exec.js</code> і <code>solver.wasm</code>, вмикає камеру і запускає цикл розпізнавання.</p>
+        </li>
+        <li>
+          <span class="stage-head">Сканування грані <span class="chip front">Браузер</span> <span class="chip back">Сервер</span> <span class="chip model">Модель</span></span>
+          <p>Кожні 220 мс браузер надсилає кадр на <code>/api/v1/scan-face</code> і отримує 9 кольорів. Відповіді кількох кадрів об'єднуються голосуванням. Коли центр збігся з очікуваним кольором, грань заморожується для перевірки.</p>
+        </li>
+        <li>
+          <span class="stage-head">Підтвердження грані <span class="chip front">Браузер</span></span>
+          <p>Користувач за потреби виправляє кольори в міні-сітці й натискає Lock Face. Кроки 3 і 4 повторюються для всіх 6 граней.</p>
+        </li>
+        <li>
+          <span class="stage-head">Перевірка розгортки <span class="chip front">Браузер</span> <span class="chip back">Сервер</span></span>
+          <p>Браузер зупиняє цикл сканування, вимикає камеру і надсилає всі 6 граней на <code>/api/v1/validate-cube</code>. Сервер перевіряє правила й повертає рядок Kociemba або помилку.</p>
+        </li>
+        <li>
+          <span class="stage-head">Розв'язок і анімація <span class="chip solver">Солвер</span> <span class="chip front">Браузер</span></span>
+          <p>Браузер передає рядок солверу, отримує список ходів і за кнопкою Solve Cube програє їх на 3D-кубику.</p>
+        </li>
+      </ol>
+
+      <div class="mermaid-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor P as Користувач
+    participant B as Браузер
+    participant S as Сервер FastAPI
+    participant M as Модель
+    participant W as Солвер WASM
+    B->>S: GET /, wasm_exec.js, solver.wasm
+    S-->>B: статичні файли
+    B->>W: go.run() реєструє kociembaSolve
+    loop кожні 220 мс, поки грань не заморожена
+        B->>S: POST /api/v1/scan-face, кадр 640×640
+        S->>M: session.run(тензор 1×3×640×640)
+        M-->>S: 8400 кандидатів
+        S-->>B: 9 кольорів або is_valid_face false
+        B->>B: голосування за кадрами, 3D-кубик
+    end
+    P->>B: Lock Face, 6 разів
+    B->>S: POST /api/v1/validate-cube, 6 граней
+    S-->>B: рядок Kociemba або помилка 422
+    B->>W: kociembaSolve(рядок)
+    W-->>B: ходи R U2 F' ...
+    P->>B: Solve Cube
+    B->>B: applyMove3D для кожного ходу
+</pre>
+      </div>
+      <p class="caption">Уся сесія на одній діаграмі. Суцільні стрілки — запити й виклики, пунктирні — відповіді.</p>
+    </section>
+
+    <!-- 3. API -->
+    <section id="api">
+      <h2>Як фронтенд спілкується з бекендом</h2>
+
+      <h3>Усе приходить з однієї адреси</h3>
+      <p>Сторінку, статичні файли та API віддає той самий сервер FastAPI. Тому адреси в коді фронтенду відносні: <code>fetch('/api/v1/scan-face')</code> іде на той самий хост, з якого завантажено сторінку. Локально це <code>localhost:8000</code>, у продакшені — домен на Render. Спеціальний дозвіл браузера на запити до чужого домену (CORS) тут не потрібен, хоча сервер про всяк випадок дозволяє їх усім.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Що завантажується</th><th>Звідки</th><th>Хто і коли запитує</th></tr></thead>
+          <tbody>
+            <tr><td><code>/</code> → <code>index.html</code></td><td>наш сервер, тека <code>static/</code></td><td>браузер під час відкриття сторінки</td></tr>
+            <tr><td><code>three.min.js</code> r128, <code>OrbitControls.js</code></td><td>CDN cdnjs і jsDelivr</td><td>теги <code>&lt;script&gt;</code> на початку сторінки</td></tr>
+            <tr><td><code>wasm_exec.js</code></td><td>наш сервер</td><td>тег <code>&lt;script&gt;</code></td></tr>
+            <tr><td><code>solver.wasm</code></td><td>наш сервер</td><td><code>loadWasmSolver()</code> одразу після завантаження скрипта</td></tr>
+            <tr><td><code>POST /api/v1/scan-face</code></td><td>наш сервер</td><td><code>scanFrame()</code>, багато разів на кожну грань</td></tr>
+            <tr><td><code>POST /api/v1/validate-cube</code></td><td>наш сервер</td><td><code>finalizeCube()</code>, один раз після шостої грані</td></tr>
+            <tr><td><code>/health</code>, <code>/docs</code>, <code>/api/v1/openapi.json</code></td><td>наш сервер</td><td>не фронтенд: моніторинг і розробник</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Усі ендпоінти</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Метод і шлях</th><th>Тіло запиту</th><th>Успішна відповідь</th><th>Помилки</th></tr></thead>
+          <tbody>
+            <tr><td><code>POST /api/v1/scan-face</code></td><td>multipart/form-data, поле <code>file</code> із зображенням</td><td>200, <code>FaceScanResult</code></td><td>400 не зображення · 422 не декодується</td></tr>
+            <tr><td><code>POST /api/v1/validate-cube</code></td><td>JSON: 6 граней по 9 кольорів</td><td>200, <code>CubeValidationSuccess</code></td><td>422 неправильна форма даних або порушено правила кубика</td></tr>
+            <tr><td><code>GET /health</code></td><td>—</td><td>200, <code>{"status": "ok", ...}</code></td><td>—</td></tr>
+            <tr><td><code>GET /docs</code></td><td>—</td><td>Swagger UI</td><td>—</td></tr>
+            <tr><td><code>GET /api/v1/openapi.json</code></td><td>—</td><td>схема API у форматі OpenAPI</td><td>—</td></tr>
+            <tr><td><code>GET</code> будь-який інший шлях</td><td>—</td><td>файл зі <code>static/</code></td><td>404, якщо файлу немає</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Swagger на <code>/docs</code> FastAPI будує автоматично з тих самих функцій і Pydantic-моделей, що обробляють запити. Там можна вручну надіслати фото в <code>/scan-face</code> і подивитися справжню відповідь.</p>
+
+      <h3 id="scan-face">POST /api/v1/scan-face: кадр → 9 кольорів</h3>
+
+      <h4>1. Браузер готує кадр</h4>
+      <p>Камера віддає відео 1280×720, якщо вміє. Функція <code>extractSquareFrameBlob()</code> вирізає з центру кадру квадрат за меншою стороною, малює його на невидимому canvas розміром 640×640 і стискає в JPEG з якістю 0,88. Розмір 640×640 обрано тому, що саме таке зображення приймає модель: серверу не доведеться його масштабувати.</p>
+      <div class="code">
+        <div class="code-label">static/index.html · extractSquareFrameBlob()</div>
+<pre>const minDim = Math.min(video.videoWidth, video.videoHeight);
+const sx = (video.videoWidth - minDim) / 2;     // відступ зліва до квадрата
+const sy = (video.videoHeight - minDim) / 2;    // відступ зверху
+offCtx.drawImage(video, sx, sy, minDim, minDim, 0, 0, 640, 640);
+return new Promise(resolve =&gt; offCanvas.toBlob(resolve, 'image/jpeg', 0.88));</pre>
+      </div>
+      <p>AR-рамка на екрані лише підказує, куди піднести кубик. На сервер іде весь центральний квадрат, а зайві стікери сервер відсіює сам.</p>
+
+      <h4>2. Запит іде мережею</h4>
+      <p>Файл надсилається як форма <code>multipart/form-data</code>, так само, як під час завантаження файлу через <code>&lt;input type="file"&gt;</code>.</p>
+      <div class="code">
+        <div class="code-label">static/index.html · scanFrame()</div>
+<pre>const formData = new FormData();
+formData.append('file', blob, 'frame.jpg');   // ім'я поля "file"
+const res = await fetch('/api/v1/scan-face', { method: 'POST', body: formData });</pre>
+      </div>
+      <div class="code">
+        <div class="code-label">що бачить сервер (спрощено)</div>
+<pre>POST /api/v1/scan-face HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryX
+
+------WebKitFormBoundaryX
+Content-Disposition: form-data; name="file"; filename="frame.jpg"
+Content-Type: image/jpeg
+
+&lt;байти JPEG 640×640&gt;
+------WebKitFormBoundaryX--</pre>
+      </div>
+
+      <h4>3. FastAPI приймає файл</h4>
+      <div class="code">
+        <div class="code-label">app/api/v1/endpoints.py</div>
+<pre>@router.post("/scan-face", response_model=FaceScanResult)
+async def scan_cube_face(
+    file: UploadFile,                                     # поле форми "file"
+    detector: IFaceDetector = Depends(get_face_detector), # підставить FastAPI
+) -&gt; FaceScanResult:</pre>
+      </div>
+      <p>Параметр <code>file: UploadFile</code> означає «візьми з форми поле з іменем file». Ім'я параметра в Python має збігатися з іменем поля у <code>FormData</code>. Щоб розбирати форми, FastAPI потрібен пакет <code>python-multipart</code>, він є в <code>requirements.txt</code>. Параметр <code>detector</code> FastAPI заповнить сам через <code>Depends</code>, про це в розділі <a href="#backend">«Бекенд зсередини»</a>.</p>
+
+      <h4>4. Можливі відповіді і що робить браузер</h4>
+      <div class="code">
+        <div class="code-label"><span class="status ok">200</span> грань знайдено · справжня відповідь, скорочена</div>
+<pre>{
+  "stickers": ["orange", "orange", "red", "green", "yellow", "red", "yellow", "green", "orange"],
+  "details": [
+    {
+      "color": "orange",
+      "confidence": 0.6295,
+      "box": { "x_min": 231.49, "y_min": 111.89, "x_max": 255.05, "y_max": 146.64 },
+      "grid_index": 0
+    },
+    "… ще 8 таких об'єктів, по одному на стікер"
+  ],
+  "center_color": "yellow",
+  "is_valid_face": true,
+  "message": "Face detected successfully"
+}</pre>
+      </div>
+      <div class="reaction"><b>Браузер:</b> додає <code>stickers</code> у <code>frameHistory</code> (зберігаються останні 5 кадрів), перераховує голосування і фарбує міні-сітку та 3D-кубик. Якщо центр після голосування збігся з кольором поточного кроку і накопичено щонайменше 3 кадри, грань заморожується: рамка стає зеленою, кнопка Lock Face вмикається, нові кадри не надсилаються. Координати <code>box</code> вказано в пікселях надісланого зображення.</div>
+
+      <div class="code">
+        <div class="code-label"><span class="status ok">200</span> грані поки не видно</div>
+<pre>{
+  "stickers": [],
+  "details": [],
+  "center_color": null,
+  "is_valid_face": false,
+  "message": "Searching for cube face: expected 9 stickers, found 8.."
+}</pre>
+      </div>
+      <div class="reaction"><b>Браузер:</b> рамка стає сірою, цикл чекає наступного кадру. Це не помилка, а звичайний стан «поки не бачу 9 стікерів», тому сервер відповідає кодом 200.</div>
+
+      <div class="code">
+        <div class="code-label"><span class="status err">400</span> надіслали не зображення</div>
+<pre>{ "detail": "Uploaded file must be a valid image format (JPEG, PNG, WebP)." }</pre>
+      </div>
+      <div class="reaction"><b>Браузер:</b> нічого не робить. Фронтенд завжди надсилає JPEG, тож ця відповідь можлива лише під час ручного запиту. Будь-яку відповідь із кодом не з групи 2xx цикл сканування мовчки пропускає. Якщо зображення не вдалося декодувати, сервер відповідає 422 з текстом помилки.</div>
+
+      <h4>5. Ритм запитів</h4>
+      <ul>
+        <li><code>const scanTimer = setInterval(scanFrame, 220)</code> викликає функцію кожні 220 мс. Ідентифікатор таймера зберігається, щоб потім зупинити цикл.</li>
+        <li>Прапорець <code>isProcessing</code> не дає надіслати новий кадр, доки не прийшла відповідь на попередній. Одночасно в дорозі не більше одного запиту: на швидкому сервері це близько 4 кадрів на секунду, на повільному рідше, але запити не накопичуються.</li>
+        <li>Поки грань заморожена (<code>isFaceFrozenForReview</code>), кадри не надсилаються: <code>scanFrame()</code> одразу виходить.</li>
+        <li>Коли всі грані збережено, <code>finalizeCube()</code> зупиняє цикл через <code>clearInterval(scanTimer)</code> і тоді ж вимикає камеру. Прапорець <code>isScanCompleted</code> на початку <code>scanFrame()</code> лишається як додатковий запобіжник.</li>
+        <li>Якщо камера ще не готова (<code>video.videoWidth</code> дорівнює 0), кадр пропускається.</li>
+      </ul>
+
+      <h4>Які поля відповіді потрібні фронтенду</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Поле</th><th>Використовується</th><th>Навіщо</th></tr></thead>
+          <tbody>
+            <tr><td><code>stickers</code></td><td>так</td><td>голосування, міні-сітка, 3D-кубик</td></tr>
+            <tr><td><code>is_valid_face</code></td><td>так</td><td>вирішує, обробляти кадр чи показати сіру рамку</td></tr>
+            <tr><td><code>center_color</code></td><td>ні</td><td>центр фронтенд бере з результату голосування, <code>currentStickers[4]</code></td></tr>
+            <tr><td><code>details</code></td><td>ні</td><td>впевненість і рамки потрібні для налагодження та Swagger</td></tr>
+            <tr><td><code>message</code></td><td>ні</td><td>текст для людини</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="validate-cube">POST /api/v1/validate-cube: 6 граней → рядок</h3>
+
+      <h4>1. Коли і що надсилається</h4>
+      <p>Після Lock Face на шостій грані викликається <code>finalizeCube()</code>. Вона програє звук, ставить <code>isScanCompleted = true</code>, ховає нижню панель, зупиняє цикл сканування, вимикає камеру й надсилає всі збережені грані одним JSON.</p>
+      <div class="code">
+        <div class="code-label">static/index.html · finalizeCube()</div>
+<pre>clearInterval(scanTimer);                             // цикл сканування більше не потрібен
+if (videoStream) {
+  videoStream.getTracks().forEach(track =&gt; track.stop());   // вимикаємо камеру
+}
+
+const payload = {
+  faces: Object.entries(capturedFaces).map(([face, stickers]) =&gt; ({ face, stickers }))
+};
+const res = await fetch('/api/v1/validate-cube', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+});</pre>
+      </div>
+      <div class="code">
+        <div class="code-label">тіло запиту</div>
+<pre>{
+  "faces": [
+    { "face": "U", "stickers": ["white", "white", "red", "green", "white", "blue", "white", "orange", "yellow"] },
+    { "face": "R", "stickers": ["… 9 кольорів"] },
+    "… ще 4 грані: F, D, L, B"
+  ]
+}</pre>
+      </div>
+      <p>Літера грані береться з масиву <code>STEPS</code> за номером кроку, а не з кольору центру. Порядок граней у списку серверу не важливий: він однаково розкладає їх за літерами.</p>
+
+      <h4>2. Відповіді і що робить браузер</h4>
+      <div class="code">
+        <div class="code-label"><span class="status ok">200</span> кубик пройшов перевірку · скорочено</div>
+<pre>{
+  "is_valid": true,
+  "kociemba_string": "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+  "detected_faces": { "U": ["white", "white", "…"], "…": "ще 5 граней" },
+  "message": "Cube is structurally valid and ready for solver."
+}</pre>
+      </div>
+      <div class="reaction"><b>Браузер:</b> ховає камеру, розгортає 3D-кубик на весь екран, показує панель розв'язку й передає <code>kociemba_string</code> солверу.</div>
+
+      <div class="code">
+        <div class="code-label"><span class="status warn">422</span> порушено правило кубика</div>
+<pre>{ "detail": "Each color must appear exactly 9 times. Anomalies detected: {'white': 10, 'yellow': 8}" }</pre>
+      </div>
+      <div class="reaction"><b>Браузер:</b> показує <code>alert</code> з текстом із <code>detail</code> і повертається до кроку 6/6. Камеру на цей момент уже вимкнено, тож почати знову можна кнопкою Reset: вона перезавантажує сторінку.</div>
+
+      <div class="code">
+        <div class="code-label"><span class="status warn">422</span> JSON не відповідає схемі · скорочено</div>
+<pre>{
+  "detail": [
+    {
+      "type": "too_short",
+      "loc": ["body", "faces"],
+      "msg": "List should have at least 6 items after validation, not 5",
+      "input": ["… надіслані 5 граней …"],
+      "ctx": { "field_type": "List", "min_length": 6, "actual_length": 5 }
+    }
+  ]
+}</pre>
+      </div>
+      <div class="reaction"><b>Хто відповідає:</b> сам FastAPI, ще до коду проєкту, коли JSON не відповідає моделі <code>ValidateCubeRequest</code>. Зверніть увагу: тут <code>detail</code> — список об'єктів, а не рядок. Фронтенд такого запиту не надішле, бо завжди шле 6 граней по 9 допустимих кольорів.</div>
+      <p>Якщо сервер не відповів зовсім, <code>fetch</code> викидає виняток, і браузер показує «Communication Error». З полів успішної відповіді фронтенд використовує <code>is_valid</code> і <code>kociemba_string</code>; <code>detected_faces</code> і <code>message</code> призначені для людей і Swagger.</p>
+
+      <h3>Зведена таблиця помилок</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ситуація</th><th>Де виявляється</th><th>Код</th><th>Що бачить користувач</th></tr></thead>
+          <tbody>
+            <tr><td>Немає доступу до камери</td><td>браузер, <code>getUserMedia</code></td><td>—</td><td>екран «Webcam Access Required»</td></tr>
+            <tr><td>Менше 9 стікерів на кадрі</td><td>детектор</td><td>200</td><td>сіра рамка, сканування триває</td></tr>
+            <tr><td>Надіслано не image/*</td><td><code>scan_cube_face</code></td><td>400</td><td>нічого: фронтенд такого не надсилає</td></tr>
+            <tr><td>Зображення не декодується</td><td><code>detect()</code>, <code>ValueError</code></td><td>422</td><td>кадр пропускається</td></tr>
+            <tr><td>Сервер недоступний</td><td>браузер, виняток у <code>fetch</code></td><td>—</td><td>під час сканування нічого, під час перевірки «Communication Error»</td></tr>
+            <tr><td>JSON не за схемою</td><td>Pydantic</td><td>422</td><td>фронтенд такого не надсилає</td></tr>
+            <tr><td>Порушено правила кубика</td><td><code>StandardCubeValidator</code></td><td>422</td><td><code>alert</code> «Validation Error…»</td></tr>
+            <tr><td>Кубик фізично неможливий</td><td>солвер у браузері</td><td>—</td><td><code>alert</code> «Solver output: Error…»</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">В ендпоінті <code>/scan-face</code> є ще гілка <code>RuntimeError → 400</code>. Вона лишилася від попередньої версії детектора, яка викидала виняток, якщо не знаходила 9 стікерів. Тепер детектор у цьому разі повертає <code>is_valid_face: false</code>.</p>
+    </section>
+
+    <!-- 4. BACKEND -->
+    <section id="backend">
+      <h2>Бекенд зсередини</h2>
+
+      <h3>Шари</h3>
+      <p>Код сервера розкладено по шарах. Головне правило: шар <code>domain</code> нічого не імпортує з проєкту, а решта шарів залежать від нього. Так найважливіше, тобто поняття й правила кубика, не залежить від деталей на кшталт FastAPI, ONNX і OpenCV. Такий підхід називають чистою архітектурою.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Шар</th><th>Файли</th><th>Що робить</th><th>Імпортує</th></tr></thead>
+          <tbody>
+            <tr><td><strong>domain</strong></td><td class="wrap"><code>models.py</code>, <code>interfaces.py</code>, <code>exceptions.py</code></td><td>поняття (колір, грань, кубик), контракти <code>IFaceDetector</code> і <code>ICubeValidator</code>, доменні помилки</td><td>нічого з проєкту</td></tr>
+            <tr><td><strong>infrastructure</strong></td><td class="wrap"><code>onnx_detector.py</code>, <code>validators.py</code></td><td>конкретні реалізації контрактів: детектор на ONNX і перевірка правил</td><td>domain</td></tr>
+            <tr><td><strong>services</strong></td><td class="wrap"><code>cube_service.py</code></td><td>сценарій «зібрати грані в кубик і перевірити»</td><td>лише інтерфейси з domain</td></tr>
+            <tr><td><strong>api</strong></td><td class="wrap"><code>schemas.py</code>, <code>v1/endpoints.py</code>, <code>deps.py</code></td><td>HTTP: формати запитів і відповідей, ендпоінти, збирання залежностей</td><td>усе перелічене вище</td></tr>
+            <tr><td><strong>core, main</strong></td><td class="wrap"><code>core/config.py</code>, <code>main.py</code></td><td>налаштування і створення застосунку</td><td>api</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart LR
+    MAIN["main.py"] --> API["api/v1/endpoints.py<br/>api/schemas.py"]
+    API --> DEPS["api/deps.py<br/>збирання залежностей"]
+    API --> SVC["services/<br/>cube_service.py"]
+    API --> DOM["domain/<br/>models, interfaces, exceptions"]
+    DEPS --> INF["infrastructure/<br/>onnx_detector.py, validators.py"]
+    DEPS --> SVC
+    SVC --> DOM
+    INF --> DOM
+</pre>
+      </div>
+      <p class="caption">Стрілка означає «імпортує». Усі стрілки зрештою сходяться до domain, а з domain не виходить жодної.</p>
+      <div class="code">
+        <div class="code-label">структура app/</div>
+<pre>app/
+├── main.py                   створення застосунку FastAPI
+├── core/config.py            налаштування (Settings)
+├── api/
+│   ├── deps.py               звідки беруться детектор, валідатор і сервіс
+│   ├── schemas.py            формати запиту й відповіді /validate-cube
+│   └── v1/endpoints.py       два ендпоінти
+├── services/cube_service.py  сценарій «зібрати й перевірити кубик»
+├── domain/
+│   ├── models.py             Color, FacePosition, FaceState, CubeState…
+│   ├── interfaces.py         IFaceDetector, ICubeValidator
+│   └── exceptions.py         CubeDomainError і нащадки
+└── infrastructure/
+    ├── onnx_detector.py      YoloOnnxFaceDetector
+    ├── validators.py         StandardCubeValidator
+    └── models/best.onnx      ваги нейромережі</pre>
+      </div>
+
+      <h3>Що відбувається під час запуску</h3>
+      <p><code>uvicorn app.main:app</code> імпортує <code>app/main.py</code>, і там по черзі:</p>
+      <ol class="chain back">
+        <li><div class="fn"><code>Settings()</code><span class="where">core/config.py</span></div><p>Читає <code>PROJECT_NAME</code> і <code>API_V1_STR</code> зі змінних оточення або файлу <code>.env</code>. Якщо їх немає, бере значення за замовчуванням.</p></li>
+        <li><div class="fn"><code>FastAPI(...)</code><span class="where">main.py</span></div><p>Створює застосунок. Схема API буде на <code>/api/v1/openapi.json</code>, Swagger — на <code>/docs</code>.</p></li>
+        <li><div class="fn"><code>add_middleware(CORSMiddleware, ...)</code><span class="where">main.py</span></div><p>Дозволяє запити з будь-яких доменів.</p></li>
+        <li><div class="fn"><code>include_router(router, prefix="/api/v1")</code><span class="where">main.py</span></div><p>Підключає ендпоінти: <code>/scan-face</code> з <code>endpoints.py</code> стає <code>/api/v1/scan-face</code>.</p></li>
+        <li><div class="fn"><code>@app.get("/health")</code><span class="where">main.py</span></div><p>Проста перевірка, що сервер живий.</p></li>
+        <li><div class="fn"><code>app.mount("/", StaticFiles(directory="static", html=True))</code><span class="where">main.py</span></div><p>Віддає файли зі <code>static/</code>, а на <code>/</code> — <code>index.html</code>.</p></li>
+      </ol>
+      <div class="callout">
+        <div class="callout-label">Чому mount підключається останнім</div>
+        <p>Маршрути перевіряються в порядку додавання. Mount на <code>/</code> підходить під будь-який шлях, і якщо підключити його раніше за API, запити до <code>/api/v1/...</code> перехопить роздача файлів.</p>
+      </div>
+      <div class="callout">
+        <div class="callout-label">Модель на старті не завантажена</div>
+        <p>Вона завантажиться під час першого запиту до <code>/scan-face</code>. Шлях до неї в коді відносний, <code>app/infrastructure/models/best.onnx</code>, тому сервер треба запускати з кореня репозиторію. У Docker це забезпечує <code>WORKDIR /app</code>.</p>
+      </div>
+
+      <h3>Впровадження залежностей</h3>
+      <p>Ендпоінт не створює детектор сам, а оголошує, що детектор йому потрібен: <code>detector: IFaceDetector = Depends(get_face_detector)</code>. Перед викликом ендпоінта FastAPI викликає <code>get_face_detector()</code> і передає результат у параметр. Усі такі функції зібрано в одному файлі:</p>
+      <div class="code">
+        <div class="code-label">app/api/deps.py</div>
+<pre>@lru_cache
+def get_face_detector() -&gt; IFaceDetector:
+    return YoloOnnxFaceDetector()        # створюється один раз на процес
+
+@lru_cache
+def get_cube_validator() -&gt; ICubeValidator:
+    return StandardCubeValidator()
+
+def get_cube_service() -&gt; CubeScannerService:
+    return CubeScannerService(validator=get_cube_validator())   # новий на кожен запит</pre>
+      </div>
+      <ul>
+        <li><code>@lru_cache</code> запам'ятовує результат функції. У функції без аргументів результат один на весь час роботи процесу, тому детектор і валідатор — синглтони. Важка модель завантажується один раз.</li>
+        <li><code>get_cube_service()</code> без кешу: сервіс створюється на кожен запит, але це дешево, всередині лише посилання на готовий валідатор.</li>
+        <li>Ендпоінт знає лише інтерфейс <code>IFaceDetector</code>. Тому в тестах реалізацію можна підмінити, і API перевіряється без нейромережі:</li>
+      </ul>
+      <div class="code">
+        <div class="code-label">tests/unit/test_scan_api.py</div>
+<pre>app.dependency_overrides[get_face_detector] = lambda: mock_det   # мок замість ONNX</pre>
+      </div>
+
+      <h3>Шлях запиту /scan-face у коді</h3>
+      <ol class="chain back">
+        <li><div class="fn"><code>scan_cube_face(file, detector)</code><span class="where">api/v1/endpoints.py</span></div><p>Перевіряє, що <code>content_type</code> починається з <code>image/</code>, інакше відповідає 400. Читає байти: <code>await file.read()</code>. Викликає <code>detector.detect(bytes)</code>. Перехоплює <code>ValueError</code> і перетворює на 422.</p></li>
+        <li><div class="fn"><code>YoloOnnxFaceDetector.detect()</code><span class="where">infrastructure/onnx_detector.py</span></div><p><code>cv2.imdecode</code> перетворює байти JPEG на масив пікселів у порядку каналів BGR. Якщо не вийшло, викидає <code>ValueError</code>.</p></li>
+        <li><div class="fn"><code>_preprocess()</code><span class="where">onnx_detector.py</span></div><p>Робить letterbox: зменшує зображення зі збереженням пропорцій так, щоб довша сторона стала 640, і доповнює чорними полями до 640×640. Потім переводить BGR у RGB, значення 0–255 у 0–1 і порядок осей «висота, ширина, канали» в «канали, висота, ширина», додає вісь батча. Виходить тензор 1×3×640×640. Для кадрів із фронтенду масштаб дорівнює 1 і полів немає.</p></li>
+        <li><div class="fn"><code>session.run()</code><span class="where">onnxruntime</span></div><p>Запускає модель на процесорі у 2 потоки. Сесія створюється один раз у конструкторі детектора.</p></li>
+        <li><div class="fn"><code>_postprocess()</code><span class="where">onnx_detector.py</span></div><p>Для кожного з 8400 кандидатів обирає найімовірніший клас і відкидає кандидатів із впевненістю нижче 0,35. Потім NMS прибирає дублікати: з двох рамок, які перекриваються більш ніж на 35% за IoU, лишається впевненіша. Наприкінці координати переводяться назад у пікселі вихідного зображення.</p></li>
+        <li><div class="fn"><code>if len(boxes) &lt; 9</code><span class="where">detect()</span></div><p>Якщо стікерів менше дев'яти, повертається <code>FaceScanResult(is_valid_face=False)</code> із повідомленням «found N».</p></li>
+        <li><div class="fn"><code>_cluster_face_stickers()</code><span class="where">onnx_detector.py</span></div><p>Якщо знайдено більше дев'яти (наприклад, у кадр потрапили стікери бічних граней), бере 9 стікерів, найближчих до медіанного центру, тобто до середини скупчення.</p></li>
+        <li><div class="fn"><code>_sort_into_3x3_grid()</code><span class="where">onnx_detector.py</span></div><p>Сортує стікери по вертикалі, ділить на три ряди по три і сортує кожен ряд по горизонталі. Виходить порядок 0–8 зліва направо і згори донизу, індекс 4 — центр. За сильного нахилу кубика ряди можуть переплутатися, тому кубик краще тримати рівно.</p></li>
+        <li><div class="fn"><code>FaceScanResult</code> → JSON<span class="where">FastAPI</span></div><p>FastAPI перетворює Pydantic-модель на JSON за схемою з <code>response_model</code>.</p></li>
+      </ol>
+
+      <h4>Вхід і вихід моделі</h4>
+      <div class="io">
+        <div>
+          <div class="io-label">Вхід · images</div>
+          <div class="shape">[1, 3, 640, 640]</div>
+          Одне RGB-зображення 640×640, числа float32 від 0 до 1. Перша вісь — номер зображення в пакеті (батчі).
+        </div>
+        <div>
+          <div class="io-label">Вихід · output0</div>
+          <div class="shape">[1, 11, 8400]</div>
+          8400 кандидатів, у кожного 11 чисел: 4 числа рамки (центр x, центр y, ширина, висота) і 7 оцінок за класами.
+        </div>
+      </div>
+      <p>Звідки 8400: модель дивиться на зображення у трьох масштабах, сітками 80×80, 40×40 і 20×20, і в кожній клітинці пропонує одного кандидата. 6400 + 1600 + 400 = 8400.</p>
+      <p>Класи: 0 white, 1 yellow, 2 green, 3 blue, 4 red, 5 orange і 6 <code>rubik_cube</code>. Сьомий клас лишився від об'єднання датасетів (див. <a href="#model">«Звідки модель»</a>), а словник <code>CLASS_TO_COLOR</code> у коді знає лише класи 0–5. На практиці оцінка цього класу близька до нуля: на 167 кадрах демо він жодного разу не пройшов поріг. Якби пройшов, код не знайшов би для нього колір, і запит завершився б помилкою 500.</p>
+
+      <h3>Шлях запиту /validate-cube у коді</h3>
+      <ol class="chain back">
+        <li><div class="fn"><code>ValidateCubeRequest</code><span class="where">api/schemas.py · Pydantic</span></div><p>Перевіряє форму даних: рівно 6 граней, у кожної літера з <code>FacePosition</code> і рівно 9 кольорів із <code>Color</code>. Рядки на кшталт <code>"white"</code> перетворюються на значення переліку <code>Color.WHITE</code>. Не підходить — 422, код проєкту не викликається.</p></li>
+        <li><div class="fn"><code>validate_cube(payload, service)</code><span class="where">api/v1/endpoints.py</span></div><p>Перетворює список на словник <code>{FacePosition: FaceState}</code>. Якщо в запиті дві грані U, у словнику лишиться одна, і це впіймає валідатор.</p></li>
+        <li><div class="fn"><code>CubeScannerService.assemble_and_validate()</code><span class="where">services/cube_service.py</span></div><p>Створює <code>CubeState</code> і викликає <code>validator.validate(cube)</code>.</p></li>
+        <li><div class="fn"><code>StandardCubeValidator.validate()</code><span class="where">infrastructure/validators.py</span></div><p>Робить три перевірки по черзі. У разі порушення викидає доменний виняток.</p></li>
+        <li><div class="fn"><code>except CubeDomainError</code><span class="where">api/v1/endpoints.py</span></div><p>Ендпоінт ловить базовий клас доменних помилок і перетворює його на відповідь 422 з текстом помилки.</p></li>
+        <li><div class="fn"><code>CubeState.to_kociemba_string()</code><span class="where">domain/models.py</span></div><p>Будує рядок із 54 літер, докладно в розділі <a href="#kociemba">«Рядок Kociemba»</a>.</p></li>
+        <li><div class="fn"><code>CubeValidationSuccess</code><span class="where">api/schemas.py</span></div><p>Формує відповідь. Pydantic додатково перевіряє, що довжина рядка рівно 54.</p></li>
+      </ol>
+      <div class="code">
+        <div class="code-label">app/infrastructure/validators.py</div>
+<pre>def validate(self, cube_state: CubeState) -&gt; None:
+    self._validate_faces_presence(cube_state)      # є всі 6 граней: U R F D L B
+    self._validate_centers(cube_state)             # центри шести різних кольорів
+    self._validate_color_distribution(cube_state)  # кожного кольору рівно 9 стікерів</pre>
+      </div>
+      <div class="code">
+        <div class="code-label">app/api/v1/endpoints.py · перетворення помилки на HTTP</div>
+<pre>except CubeDomainError as exc:
+    raise HTTPException(status_code=422, detail=str(exc)) from None</pre>
+      </div>
+      <p>Усі три помилки валідатора (<code>InvalidFaceOrderError</code>, <code>DuplicateCenterColorError</code>, <code>InvalidColorDistributionError</code>) успадковуються від <code>CubeDomainError</code>, тому ендпоінту достатньо одного <code>except</code>. Домен нічого не знає про HTTP-коди: перетворенням помилок на відповіді займається шар api.</p>
+
+      <h3>Моделі даних</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Клас</th><th>Файл</th><th>Що описує</th></tr></thead>
+          <tbody>
+            <tr><td><code>Color</code></td><td>domain/models.py</td><td>6 кольорів: white, yellow, green, blue, red, orange</td></tr>
+            <tr><td><code>FacePosition</code></td><td>domain/models.py</td><td>6 граней: U, R, F, D, L, B (верх, право, фронт, низ, ліво, тил)</td></tr>
+            <tr><td><code>BoundingBox</code></td><td>domain/models.py</td><td>рамка стікера: x_min, y_min, x_max, y_max</td></tr>
+            <tr><td><code>DetectedSticker</code></td><td>domain/models.py</td><td>колір, впевненість, рамка і позиція 0–8 на грані</td></tr>
+            <tr><td><code>FaceScanResult</code></td><td>domain/models.py</td><td>результат розпізнавання одного кадру, він же відповідь <code>/scan-face</code></td></tr>
+            <tr><td><code>FaceState</code></td><td>domain/models.py</td><td>одна грань: літера і рівно 9 кольорів; <code>center_color</code> — це <code>stickers[4]</code></td></tr>
+            <tr><td><code>CubeState</code></td><td>domain/models.py</td><td>увесь кубик: словник граней і метод <code>to_kociemba_string()</code></td></tr>
+            <tr><td><code>FacePayload</code>, <code>ValidateCubeRequest</code></td><td>api/schemas.py</td><td>формат запиту <code>/validate-cube</code></td></tr>
+            <tr><td><code>CubeValidationSuccess</code></td><td>api/schemas.py</td><td>формат успішної відповіді <code>/validate-cube</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Усі моделі — класи Pydantic, вони перевіряють типи й обмеження одразу під час створення об'єкта. Наприклад, <code>FaceState</code> із вісьмома стікерами створити не можна: це помилка ще до будь-якої логіки. <code>FaceScanResult</code> водночас і доменна модель, і формат відповіді API; у великих проєктах їх часто розділяють, тут для простоти використовується одна модель.</p>
+    </section>
+
+    <!-- 5. FRONTEND -->
+    <section id="frontend">
+      <h2>Фронтенд зсередини</h2>
+      <p>Увесь фронтенд — один файл <code>static/index.html</code>: розмітка, стилі й близько 700 рядків JavaScript без фреймворків і збирання. Скрипт виконується згори донизу під час завантаження сторінки. Коментарі ділять його на розділи: звук, завантаження солвера, кольори й кроки, 3D-сцена, анімація ходів, камера і сканування, фінал.</p>
+
+      <h3>З чого складається екран</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Блок</th><th>id</th><th>Що всередині</th><th>Коли видно</th></tr></thead>
+          <tbody>
+            <tr><td>Сканер</td><td><code>scanner-pane</code></td><td>заголовок кроку й підказка «який колір згори», відео з камери, AR-рамка на canvas, нижня панель: міні-сітка, Lock Face, Rescan, Back</td><td>під час сканування</td></tr>
+            <tr><td>3D-кубик</td><td><code>cube-pane</code></td><td>сцена Three.js, кнопка Reset</td><td>завжди; після успішної перевірки — на весь екран</td></tr>
+            <tr><td>Панель розв'язку</td><td><code>inspection-hud</code></td><td>рядок розв'язку, Solve Cube, Copy Solution, Rescan</td><td>після успішної перевірки</td></tr>
+            <tr><td>Немає камери</td><td><code>camera-blocked-modal</code></td><td>прохання дозволити доступ до камери</td><td>якщо браузер не дав камеру</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>На телефоні сканер і кубик ділять екран навпіл по висоті, на комп'ютері стоять поруч.</p>
+
+      <h3>Стан</h3>
+      <p>Усе, що застосунок «пам'ятає», лежить у звичайних змінних JavaScript. Перезавантаження сторінки стирає їх, тому Reset і Rescan після розв'язку реалізовано як <code>location.reload()</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Змінна</th><th>Що зберігає</th></tr></thead>
+          <tbody>
+            <tr><td><code>STEPS</code></td><td>6 кроків по черзі: літера грані, очікуваний колір центру, підказка «який колір згори», кути повороту 3D-кубика</td></tr>
+            <tr><td><code>currentStepIdx</code></td><td>номер поточного кроку, від 0 до 5</td></tr>
+            <tr><td><code>frameHistory</code></td><td>9 кольорів з останніх кадрів, не більше 5 кадрів</td></tr>
+            <tr><td><code>currentStickers</code></td><td>поточні 9 кольорів грані після голосування і ручного виправлення</td></tr>
+            <tr><td><code>capturedFaces</code></td><td>підтверджені грані: <code>{ U: [...], R: [...], ... }</code></td></tr>
+            <tr><td><code>isProcessing</code></td><td>запит до <code>/scan-face</code> уже в дорозі</td></tr>
+            <tr><td><code>isFaceFrozenForReview</code></td><td>грань розпізнано, вона чекає на Lock Face</td></tr>
+            <tr><td><code>isScanCompleted</code></td><td>усі 6 граней збережено</td></tr>
+            <tr><td><code>scanTimer</code></td><td>ідентифікатор таймера <code>setInterval</code>, за яким <code>finalizeCube()</code> зупиняє цикл сканування</td></tr>
+            <tr><td><code>videoStream</code></td><td>потік камери з <code>getUserMedia</code>; <code>finalizeCube()</code> зупиняє всі його доріжки</td></tr>
+            <tr><td><code>window.kociembaSolve</code></td><td>функція солвера, з'являється після завантаження WASM</td></tr>
+            <tr><td><code>solutionMoves</code></td><td>ходи розв'язку: <code>["R", "U2", "F'", …]</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Функції та події</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Функція</th><th>Хто викликає</th><th>Що робить</th></tr></thead>
+          <tbody>
+            <tr><td><code>initCameraStrict()</code></td><td>завантаження сторінки</td><td>просить камеру через <code>getUserMedia</code> (задня, 1280×720); у разі відмови показує екран «немає камери»</td></tr>
+            <tr><td><code>loadWasmSolver()</code></td><td>завантаження сторінки</td><td>завантажує <code>solver.wasm</code> і запускає його, після чого з'являється <code>window.kociembaSolve</code></td></tr>
+            <tr><td><code>scanFrame()</code></td><td><code>setInterval</code>, кожні 220 мс</td><td>кадр → <code>/scan-face</code> → голосування → міні-сітка і 3D → заморожування грані</td></tr>
+            <tr><td><code>extractSquareFrameBlob()</code></td><td><code>scanFrame()</code></td><td>центральний квадрат кадру → JPEG 640×640</td></tr>
+            <tr><td><code>computeConsensusStickers()</code></td><td><code>scanFrame()</code></td><td>для кожної з 9 позицій обирає колір, що найчастіше траплявся в останніх кадрах</td></tr>
+            <tr><td><code>drawARHUD(color)</code></td><td><code>scanFrame()</code></td><td>малює рамку: сіру (грані не видно), помаранчеву (видно, але зарано), зелену (готово)</td></tr>
+            <tr><td><code>renderMiniGrid()</code></td><td>після будь-якої зміни <code>currentStickers</code></td><td>перефарбовує міні-сітку</td></tr>
+            <tr><td><code>update3DFaceColors(face, colors)</code></td><td><code>scanFrame()</code>, кліки, Lock Face</td><td>перефарбовує 9 стікерів грані на 3D-кубику</td></tr>
+            <tr><td>клік по стікеру міні-сітки</td><td>користувач</td><td>змінює колір на наступний по колу</td></tr>
+            <tr><td>Lock Face</td><td>користувач</td><td>зберігає грань у <code>capturedFaces</code>, переходить до наступного кроку й повертає кубик; після шостої грані викликає <code>finalizeCube()</code></td></tr>
+            <tr><td>Rescan</td><td>користувач</td><td>скидає кадри поточної грані й розморожує її</td></tr>
+            <tr><td>Back</td><td>користувач</td><td>повертає до попередньої грані й видаляє її з <code>capturedFaces</code></td></tr>
+            <tr><td>Reset</td><td>користувач</td><td>перезавантажує сторінку</td></tr>
+            <tr><td><code>finalizeCube()</code></td><td>Lock Face на шостій грані</td><td>зупиняє цикл сканування (<code>clearInterval</code>) і вимикає камеру, викликає <code>/validate-cube</code>, потім солвер, показує панель розв'язку</td></tr>
+            <tr><td><code>applyMove3D(move)</code></td><td>кнопка Solve Cube</td><td>анімує один хід на 3D-кубику</td></tr>
+            <tr><td><code>animate()</code></td><td><code>requestAnimationFrame</code>, кожен кадр екрана</td><td>плавно повертає кубик до потрібної грані й перемальовує сцену</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="callout-label">Коли виправляти кольори</div>
+        <p>Поки грань не заморожена, кожен новий кадр перераховує <code>currentStickers</code> голосуванням і перезаписує ручне виправлення. Виправляти має сенс після заморожування, коли рамка зелена, а сканування на паузі.</p>
+      </div>
+
+      <h3>3D-кубик</h3>
+      <ul>
+        <li>Кубик зібрано з 27 маленьких кубиків (cubie) розміром 0,95 з координатами від −1 до 1 по кожній осі; центрального не видно. У кожного шість матеріалів у порядку граней <code>BoxGeometry</code>: +X (R), −X (L), +Y (U), −Y (D), +Z (F), −Z (B). Зовнішні грані спершу сірі, внутрішні темні.</li>
+        <li>Таблиця <code>faceletToCubieMap</code> для кожного з 54 стікерів рядка Kociemba зберігає, який кубик і який його матеріал перефарбувати. За нею <code>update3DFaceColors()</code> розфарбовує модель просто під час сканування.</li>
+        <li>Під час переходу до наступного кроку зі <code>STEPS</code> беруться нові цільові кути. Цикл <code>animate()</code> кожен кадр наближає поворот кубика до цілі на 8%, тому кубик плавно повертається до грані, яку зараз сканують.</li>
+        <li><code>applyMove3D()</code> анімує один хід: обирає 9 кубиків потрібного шару за координатою, прикріплює їх до тимчасового об'єкта-шарніра (pivot), повертає шарнір на 90° або 180° невеликими кроками, потім повертає кубики в загальну групу й округлює їхні координати й кути. Без округлення похибка дробових чисел накопичувалася б від ходу до ходу, і через кілька ходів шари перестали б знаходитися за координатами.</li>
+      </ul>
+    </section>
+
+    <!-- 6. KOCIEMBA -->
+    <section id="kociemba">
+      <h2>Рядок Kociemba і розгортка</h2>
+      <p>Солверу потрібен опис кубика у стандартному вигляді: рядок із 54 літер. Кожна літера відповідає на питання «якого кольору стікер на цій позиції», але замість кольору пишеться літера грані, у якої центр такого кольору. Грані йдуть у порядку U, R, F, D, L, B, усередині грані — рядами зліва направо і згори донизу.</p>
+      <div class="net-wrap">
+        <div class="net" id="net" role="img" aria-label="Розгортка зібраного кубика: грані U, L, F, R, B, D з номерами позицій від 0 до 53"></div>
+      </div>
+      <p class="caption">Розгортка зібраного кубика з номерами позицій у рядку. Кожну грань намальовано так, як її просить тримати сканер.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Крок</th><th>Грань</th><th>Центр</th><th>Згори тримати</th><th>Позиції в рядку</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>U</td><td><span class="dot st-white"></span>білий</td><td><span class="dot st-blue"></span>синій</td><td>0–8</td></tr>
+            <tr><td>2</td><td>R</td><td><span class="dot st-red"></span>червоний</td><td><span class="dot st-white"></span>білий</td><td>9–17</td></tr>
+            <tr><td>3</td><td>F</td><td><span class="dot st-green"></span>зелений</td><td><span class="dot st-white"></span>білий</td><td>18–26</td></tr>
+            <tr><td>4</td><td>D</td><td><span class="dot st-yellow"></span>жовтий</td><td><span class="dot st-green"></span>зелений</td><td>27–35</td></tr>
+            <tr><td>5</td><td>L</td><td><span class="dot st-orange"></span>помаранчевий</td><td><span class="dot st-white"></span>білий</td><td>36–44</td></tr>
+            <tr><td>6</td><td>B</td><td><span class="dot st-blue"></span>синій</td><td><span class="dot st-white"></span>білий</td><td>45–53</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Підказки сканера точно повторюють орієнтацію граней на розгортці: над U лежить B із синім центром, над D — F із зеленим, над бічними гранями — U з білим. Детектор повертає стікери в тому порядку, в якому їх видно на знімку. Якщо тримати кубик інакше, порядок усередині грані зіб'ється. Кількість кольорів при цьому не зміниться, тому валідатор помилки не помітить, але рядок зазвичай описуватиме неможливий кубик, і солвер відмовиться його розв'язувати.</p>
+
+      <h3>Як сервер будує рядок</h3>
+      <div class="code">
+        <div class="code-label">app/domain/models.py · CubeState.to_kociemba_string(), спрощено</div>
+<pre>color_mapping = {
+    face_state.center_color: face_pos          # white → U, red → R, ...
+    for face_pos, face_state in self.faces.items()
+}
+for face_pos in [U, R, F, D, L, B]:
+    for color in self.faces[face_pos].stickers:
+        result.append(color_mapping[color].value)
+return "".join(result)                         # 54 літери</pre>
+      </div>
+      <p>Спершу за центрами будується словник «колір → літера». Білий центр стоїть на U, отже кожен білий стікер будь-де на кубику записується літерою U. Потім усі 54 стікери по черзі замінюються літерами. Приклад: якщо в лівому верхньому куті грані U (позиція 0) стоїть помаранчевий стікер, першою літерою рядка буде L, бо помаранчевий центр у грані L. Зібраний кубик дає рядок <code>UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB</code>.</p>
+    </section>
+
+    <!-- 7. SOLVER -->
+    <section id="solver">
+      <h2>Солвер у браузері</h2>
+      <p>Солвер — окремий проєкт на Go (<a href="https://github.com/Super-Morse/rubiks-solver" target="_blank" rel="noopener">rubiks-solver</a>), скомпільований у WebAssembly з налаштуваннями <code>GOOS=js GOARCH=wasm</code>. Результат — файл <code>static/solver.wasm</code>. Допоміжний <code>wasm_exec.js</code> з постачання Go додає в JavaScript клас <code>Go</code>, який уміє запускати такі модулі.</p>
+      <div class="code">
+        <div class="code-label">static/index.html · loadWasmSolver()</div>
+<pre>const go = new Go();                                 // клас із wasm_exec.js
+const response = await fetch("solver.wasm");
+const buffer = await response.arrayBuffer();
+const result = await WebAssembly.instantiate(buffer, go.importObject);
+go.run(result.instance);                             // Go-код реєструє window.kociembaSolve</pre>
+      </div>
+      <ul>
+        <li><strong>Вхід:</strong> рядок Kociemba з 54 літер.</li>
+        <li><strong>Вихід:</strong> рядок ходів, наприклад <code>R L' U R F2 U R2 …</code>. Літера — грань, яку треба повернути за годинниковою стрілкою, якщо дивитися прямо на неї; апостроф — проти годинникової; двійка — на 180°.</li>
+        <li><strong>Перевірка:</strong> перед розв'язанням солвер перевіряє, що кубик фізично можна зібрати: немає перекрученого кута, перевернутого ребра й порушеної парності перестановок. Якщо перевірка не пройшла, повертається рядок, що починається з <code>Error</code>, і сторінка показує його в <code>alert</code>.</li>
+        <li><strong>Швидкість:</strong> двофазний алгоритм Коцемби знаходить розв'язок завдовжки близько 20 ходів за мілісекунди.</li>
+        <li><strong>Зібраний кубик:</strong> якщо рядок уже описує зібраний кубик, солвер не викликається, і сторінка одразу пише, що кубик зібраний.</li>
+      </ul>
+      <p>Чому солвер не на сервері: обчислення швидке й не потребує нічого, крім рядка, який вже є в браузері. Окремий запит додав би затримку й навантаження на сервер.</p>
+      <p>Анімація розв'язку: кнопка Solve Cube запускає ланцюжок <code>playNext()</code>. Кожен хід програє <code>applyMove3D()</code>, а через 90 мс після його завершення починається наступний. Copy Solution копіює рядок розв'язку в буфер обміну.</p>
+    </section>
+
+    <!-- 8. MODEL -->
+    <section id="model">
+      <h2>Звідки взялася модель</h2>
+      <p>Модель навчено заздалегідь, і вона лежить у репозиторії готовим файлом. Сервер її лише запускає. Навчання відбувалося так:</p>
+      <ol class="chain">
+        <li><div class="fn"><strong>Синтетичні дані</strong><span class="where">tools/dataset-generator/index.html</span></div><p>Генератор на Three.js у браузері малює кубик із випадковими кольорами, поворотом, світлом і фоном і сам обчислює рамки видимих стікерів. Розмічати вручну не потрібно. На виході ZIP у форматі YOLO, розбитий на навчальну й перевірну вибірки у пропорції 80/20.</p></li>
+        <li><div class="fn"><strong>Справжні фото</strong></div><p>Синтетика не в усьому схожа на зображення з камери, тому до неї додаються розмічені справжні знімки. Цей підхід називають sim-to-real.</p></li>
+        <li><div class="fn"><strong>Об'єднання</strong><span class="where">tools/merge_datasets.py</span></div><p>Зводить назви класів різних датасетів до єдиного списку (6 кольорів і <code>rubik_cube</code>) і складає все в один датасет.</p></li>
+        <li><div class="fn"><strong>Навчання</strong><span class="where">tools/train.py</span></div><p>Бере попередньо навчену YOLO11n (nano, найменша версія), донавчає її 30 епох на зображеннях 640×640 і експортує в ONNX.</p></li>
+        <li><div class="fn"><strong>У застосунок</strong><span class="where">app/infrastructure/models/best.onnx</span></div><p>Файл близько 10,7 МБ зберігається просто в репозиторії. Серверу потрібен лише <code>onnxruntime</code>: PyTorch і ultralytics у продакшені не використовуються.</p></li>
+      </ol>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Метрика</th><th>Значення</th><th>Що означає</th></tr></thead>
+          <tbody>
+            <tr><td>mAP@50</td><td>99,0%</td><td>наскільки добре модель знаходить стікери й вгадує колір, якщо зараховувати рамку, коли вона перекривається з правильною щонайменше на 50%</td></tr>
+            <tr><td>mAP@50-95</td><td>91,1%</td><td>те саме, але в середньому за дедалі суворішими порогами перекриття, від 50% до 95%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Значення метрик узято з README проєкту.</p>
+    </section>
+
+    <!-- 9. RUN -->
+    <section id="run">
+      <h2>Запуск, тести і деплой</h2>
+      <h3>Локальний запуск</h3>
+      <div class="code">
+        <div class="code-label">через Docker</div>
+<pre>docker compose up --build
+# http://localhost:8000          сканер
+# http://localhost:8000/docs     Swagger
+# http://localhost:8000/health   перевірка</pre>
+      </div>
+      <div class="code">
+        <div class="code-label">без Docker, через uv</div>
+<pre>uv venv --python 3.11 &amp;&amp; source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000</pre>
+      </div>
+      <ul>
+        <li><strong>Docker-образ</strong> збирається на основі <code>python:3.11-slim</code> із системною бібліотекою <code>libglib2.0</code> для OpenCV. Застосунок працює від непривілейованого користувача <code>appuser</code> і запускається командою <code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code>.</li>
+        <li><strong>docker-compose</strong> підключає теки <code>app/</code> і <code>tests/</code> з комп'ютера всередину контейнера й запускає сервер із <code>--reload</code>, тож зміни в Python-коді підхоплюються без перезбирання. Тека <code>static/</code> копіюється в образ під час збирання, тому після правок <code>index.html</code> потрібне перезбирання.</li>
+        <li><strong>Камера</strong> в браузері працює лише через https або на localhost. Щоб відкрити локальний сервер із телефона, потрібен https-тунель, наприклад Pinggy (<code>ssh -p 443 -R0:localhost:8000 a.pinggy.io</code>) або cloudflared.</li>
+      </ul>
+
+      <h3>Тести</h3>
+      <p>23 модульні тести в <code>tests/unit</code>, покриття коду 100%:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Файл</th><th>Що перевіряє</th></tr></thead>
+          <tbody>
+            <tr><td><code>test_scan_api.py</code></td><td>обидва ендпоінти через <code>TestClient</code>; детектор підмінено моком через <code>dependency_overrides</code></td></tr>
+            <tr><td><code>test_onnx_detector.py</code></td><td>детектор: завантаження справжньої моделі, биті байти, порожнє зображення, сортування в сітку 3×3, вибір 9 стікерів із більшої кількості, letterbox для витягнутого зображення</td></tr>
+            <tr><td><code>test_cube_validator.py</code></td><td>три правила кубика й рядок Kociemba</td></tr>
+            <tr><td><code>test_cube_service.py</code></td><td>збирання граней у <code>CubeState</code></td></tr>
+            <tr><td><code>test_deps.py</code></td><td>що залежності створюються один раз і правильно зв'язуються</td></tr>
+            <tr><td><code>test_health.py</code></td><td><code>/health</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code">
+        <div class="code-label">команди</div>
+<pre>docker compose exec detector-api pytest        # тести з покриттям
+docker compose exec detector-api ruff check .  # лінтер
+docker compose exec detector-api mypy app/     # перевірка типів</pre>
+      </div>
+      <p class="small muted">Фронтенд (<code>static/index.html</code>) автотестами не покрито: цикл сканування, камеру й анімацію перевіряють вручну в браузері.</p>
+
+      <h3>CI і продакшен</h3>
+      <ul>
+        <li><strong>GitHub Actions</strong> під час кожного push і pull request у <code>main</code> встановлює залежності, запускає <code>pytest</code> з покриттям і надсилає результат на аналіз у SonarCloud.</li>
+        <li><strong>Продакшен</strong> працює на Render: <a href="https://rubiks-visual-detector-and-solver.onrender.com" target="_blank" rel="noopener">rubiks-visual-detector-and-solver.onrender.com</a>. Щоб переконатися, що після деплою працює нова версія бекенду, достатньо порівняти список шляхів у <code>/api/v1/openapi.json</code> з кодом. Зміни лише у фронтенді там не видно: їх перевіряють у коді сторінки.</li>
+        <li><strong>Цей посібник</strong> лежить у <code>docs/learn.html</code>, і GitHub Pages віддає його прямо з гілки <code>main</code>, окремо від застосунку на Render. Щоб отримати PDF, відкрийте сторінку й надрукуйте її з браузера (Ctrl+P → «Зберегти як PDF»).</li>
+      </ul>
+    </section>
+
+    <!-- 10. QUIZ -->
+    <section id="quiz">
+      <h2>Перевір себе</h2>
+      <p>Спробуйте відповісти, перш ніж розгортати відповідь.</p>
+      <div class="quiz">
+        <details>
+          <summary>Користувач відсканував три грані, і в цей момент сервер перезапустився. Чи втратиться прогрес?</summary>
+          <p>Ні. Прогрес зберігається в змінних браузера, у <code>capturedFaces</code>. Сервер стану не зберігає. Кадри, надіслані під час перезапуску, просто не отримають відповіді, і цикл сканування продовжить роботу.</p>
+        </details>
+        <details>
+          <summary>Що поверне /scan-face, якщо на кадрі знайдено 8 стікерів? Чому це не помилка?</summary>
+          <p>Код 200 з <code>is_valid_face: false</code> і повідомленням «found 8». Для сканера це нормальна ситуація «грані поки не видно», а коди помилок залишено для справді неправильних запитів.</p>
+        </details>
+        <details>
+          <summary>Коли модель завантажується в пам'ять і скільки разів?</summary>
+          <p>Один раз, під час першого запиту до <code>/scan-face</code>. Функцію <code>get_face_detector()</code> позначено <code>@lru_cache</code>, і вона створює <code>YoloOnnxFaceDetector</code> лише під час першого виклику.</p>
+        </details>
+        <details>
+          <summary>Як тести API працюють без нейромережі?</summary>
+          <p>Ендпоінт отримує детектор через <code>Depends(get_face_detector)</code> і знає лише інтерфейс <code>IFaceDetector</code>. У тестах <code>app.dependency_overrides</code> підставляє замість нього мок.</p>
+        </details>
+        <details>
+          <summary>Чим відрізняються дві відповіді 422 від /validate-cube?</summary>
+          <p>Першу формує Pydantic, коли JSON не відповідає схемі: <code>detail</code> — список помилок. Другу формує ендпоінт, впіймавши <code>CubeDomainError</code> від валідатора: <code>detail</code> — рядок з описом порушеного правила.</p>
+        </details>
+        <details>
+          <summary>Чому фронтенд надсилає квадрат 640×640, а не весь кадр 1280×720?</summary>
+          <p>Модель приймає зображення 640×640. Квадрат такого розміру не треба масштабувати й доповнювати полями, і мережею йде менше даних.</p>
+        </details>
+        <details>
+          <summary>Що станеться з циклом сканування після шостої грані?</summary>
+          <p><code>finalizeCube()</code> викликає <code>clearInterval(scanTimer)</code>, і таймер більше не спрацьовує. Тоді ж зупиняються доріжки камери. Навіть якби таймер лишився, <code>scanFrame()</code> одразу виходила б через прапорець <code>isScanCompleted</code>, тож це прибирання, а не виправлення видимої помилки.</p>
+        </details>
+        <details>
+          <summary>Валідатор пропустив кубик, у якого перекручено один кут. Що станеться далі?</summary>
+          <p>Центри й кількість кольорів у порядку, тому сервер поверне 200 і рядок. Солвер у браузері перевірить, чи можна зібрати такий кубик, поверне рядок з <code>Error</code>, і сторінка покаже його в <code>alert</code>.</p>
+        </details>
+        <details>
+          <summary>Навіщо applyMove3D округлює координати після кожного ходу?</summary>
+          <p>Повороти рахуються в дробових числах, і похибка накопичується. Шар для наступного ходу обирається за координатою кубика, тому без округлення через кілька ходів кубики перестали б знаходитися.</p>
+        </details>
+        <details>
+          <summary>Що зламається, якщо в main.py підключити app.mount("/", ...) раніше за include_router?</summary>
+          <p>Роздача статики перехопить усі шляхи, включно з <code>/api/v1/...</code>, і API перестане відповідати.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- 11. GLOSSARY -->
+    <section id="glossary">
+      <h2>Словник</h2>
+      <dl class="glossary">
+        <dt>Ендпоінт</dt><dd>Адреса й HTTP-метод, на які сервер відповідає певною функцією, наприклад <code>POST /api/v1/scan-face</code>.</dd>
+        <dt>FastAPI</dt><dd>Вебфреймворк на Python. Будує API зі звичайних функцій з анотаціями типів і сам генерує документацію.</dd>
+        <dt>Uvicorn</dt><dd>Сервер, який приймає HTTP-з'єднання й передає запити застосунку FastAPI.</dd>
+        <dt>Pydantic</dt><dd>Бібліотека моделей даних. Перевіряє типи й обмеження та перетворює JSON на об'єкти Python і назад.</dd>
+        <dt>Впровадження залежностей</dt><dd>Прийом, за якого функція не створює потрібні їй об'єкти сама, а отримує їх ззовні. У FastAPI для цього слугує <code>Depends</code>.</dd>
+        <dt>Синглтон</dt><dd>Об'єкт, який існує в одному екземплярі на весь процес.</dd>
+        <dt>Stateless</dt><dd>Сервер, який не зберігає стан між запитами.</dd>
+        <dt>multipart/form-data</dt><dd>Формат HTTP-запиту для надсилання файлів, той самий, що під час завантаження файлу через форму.</dd>
+        <dt>ONNX, onnxruntime</dt><dd>Відкритий формат файлів нейромереж і програма, яка запускає такі файли без PyTorch.</dd>
+        <dt>YOLO</dt><dd>Сімейство нейромереж для пошуку об'єктів: за один прохід по зображенню видає рамки й класи.</dd>
+        <dt>Letterbox</dt><dd>Масштабування зображення зі збереженням пропорцій і доповненням полями до квадрата.</dd>
+        <dt>IoU</dt><dd>Площа перетину двох рамок, поділена на площу їхнього об'єднання. 1 — рамки збігаються, 0 — не перетинаються.</dd>
+        <dt>NMS</dt><dd>Non-maximum suppression: видалення рамок-дублікатів одного об'єкта. З рамок, що сильно перекриваються, лишається найвпевненіша.</dd>
+        <dt>WebAssembly</dt><dd>Формат байт-коду, який браузер виконує майже зі швидкістю звичайної програми. У нього компілюються Go, Rust, C++.</dd>
+        <dt>Рядок Kociemba</dt><dd>Стандартний запис стану кубика з 54 літер URFDLB.</dd>
+        <dt>CORS</dt><dd>Правила браузера для запитів зі сторінки до іншого домену.</dd>
+        <dt>Three.js</dt><dd>Бібліотека 3D-графіки для браузера поверх WebGL.</dd>
+      </dl>
+    </section>
+
+    <footer>
+      Складено за кодом репозиторію rubiks-visual-detector. Приклади відповідей API отримано запуском справжнього сервера зі справжньою моделлю; довгі масиви скорочено.
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Cube net: six faces of a solved cube with their positions 0–53 in the Kociemba string.
+  (function () {
+    var net = document.getElementById('net');
+    if (!net) return;
+    var faces = [
+      { name: 'U', color: 'white', start: 0, col: 2, row: 1 },
+      { name: 'L', color: 'orange', start: 36, col: 1, row: 2 },
+      { name: 'F', color: 'green', start: 18, col: 2, row: 2 },
+      { name: 'R', color: 'red', start: 9, col: 3, row: 2 },
+      { name: 'B', color: 'blue', start: 45, col: 4, row: 2 },
+      { name: 'D', color: 'yellow', start: 27, col: 2, row: 3 }
+    ];
+    faces.forEach(function (f) {
+      var face = document.createElement('div');
+      face.className = 'net-face';
+      face.style.gridColumn = String(f.col);
+      face.style.gridRow = String(f.row);
+      for (var i = 0; i < 9; i++) {
+        var s = document.createElement('div');
+        s.className = 'st st-' + f.color + (i === 4 ? ' st-center' : '');
+        if (i === 4) {
+          var b = document.createElement('b');
+          b.textContent = f.name;
+          s.appendChild(b);
+        }
+        var n = document.createElement('span');
+        n.textContent = String(f.start + i);
+        s.appendChild(n);
+        face.appendChild(s);
+      }
+      net.appendChild(face);
+    });
+  })();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  // Mermaid diagrams, themed to match the page in light and dark mode.
+  // If the CDN is unreachable, the diagram source stays visible as plain text.
+  (function () {
+    if (typeof mermaid === 'undefined') return;
+    var PAL = {
+      light: { surface: '#eceff4', text: '#1a1e26', line: '#586273', border: '#8a94a6' },
+      dark: { surface: '#1c222b', text: '#e4e8ee', line: '#9ba5b5', border: '#5a6577' }
+    };
+    var root = document.documentElement;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var items = Array.prototype.map.call(document.querySelectorAll('pre.mermaid'), function (pre) {
+      var mount = document.createElement('div');
+      mount.className = 'mermaid-diagram';
+      return { pre: pre, mount: mount, src: pre.textContent || '' };
+    });
+    if (!items.length) return;
+    var seq = 0, gen = 0, lastKey = '';
+
+    function render() {
+      var theme = root.getAttribute('data-theme');
+      var dark = theme === 'dark' || (!!(mq && mq.matches) && theme !== 'light');
+      var pal = dark ? PAL.dark : PAL.light;
+      var bg = getComputedStyle(document.body).backgroundColor;
+      var key = (dark ? 'd' : 'l') + '|' + bg;
+      if (key === lastKey) return;
+      lastKey = key;
+      var g = ++gen;
+      var nat = { useMaxWidth: false };
+      mermaid.initialize({
+        startOnLoad: false, securityLevel: 'strict', theme: 'base',
+        flowchart: nat, sequence: nat,
+        themeVariables: {
+          background: bg, mainBkg: pal.surface, primaryColor: pal.surface,
+          primaryTextColor: pal.text, lineColor: pal.line, primaryBorderColor: pal.border,
+          nodeBorder: pal.border, edgeLabelBackground: bg, titleColor: pal.text,
+          actorBkg: pal.surface, actorBorder: pal.border, actorTextColor: pal.text,
+          signalColor: pal.line, signalTextColor: pal.text, labelBoxBkgColor: pal.surface,
+          labelBoxBorderColor: pal.border, labelTextColor: pal.text, loopTextColor: pal.text,
+          noteBkgColor: pal.surface, noteTextColor: pal.text, noteBorderColor: pal.border,
+          darkMode: dark, fontSize: '15px', fontFamily: getComputedStyle(document.body).fontFamily
+        }
+      });
+      items.forEach(function (it) {
+        var id = 'mermaid-' + seq++;
+        mermaid.render(id, it.src).then(function (r) {
+          if (g !== gen) return;
+          it.mount.innerHTML = r.svg;
+          if (!it.mount.parentNode) it.pre.parentNode.insertBefore(it.mount, it.pre);
+          it.pre.style.display = 'none';
+        }, function () {
+          var scratch = document.getElementById('d' + id) || document.getElementById(id);
+          if (scratch && scratch.parentNode) scratch.parentNode.removeChild(scratch);
+        });
+      });
+    }
+
+    render();
+    if (mq && mq.addEventListener) mq.addEventListener('change', render);
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(render).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+  })();
+</script>
+
+<script>
+  // Printing (Ctrl+P → Save as PDF): switch to the light theme and expand the quiz answers.
+  (function () {
+    var root = document.documentElement, closed = [], prevTheme = null;
+    window.addEventListener('beforeprint', function () {
+      prevTheme = root.getAttribute('data-theme');
+      root.setAttribute('data-theme', 'light');
+      closed = Array.prototype.filter.call(document.querySelectorAll('details'), function (d) { return !d.open; });
+      closed.forEach(function (d) { d.open = true; });
+    });
+    window.addEventListener('afterprint', function () {
+      if (prevTheme === null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', prevTheme);
+      closed.forEach(function (d) { d.open = false; });
+    });
+  })();
+</script>
+</body>
+</html>
